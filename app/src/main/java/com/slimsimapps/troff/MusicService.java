@@ -7,7 +7,6 @@ import android.os.IBinder;
 import java.util.ArrayList;
 import android.content.ContentUris;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
@@ -24,13 +23,12 @@ public class MusicService extends Service implements
 
     private static final String TAG = "MusicService";
 
-    //media player
     private MediaPlayer player;
-    //song list
     private ArrayList<Song> songs;
-    //current position
-    private int songPosn;
+    private int selectedSongNr;
     private final IBinder musicBind = new MusicBinder();
+
+    private int currentPosition = 0;
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
@@ -46,7 +44,7 @@ public class MusicService extends Service implements
         //create the service
         super.onCreate();
         //initialize position
-        songPosn = 0;
+        selectedSongNr = 0;
         //create player
         player = new MediaPlayer();
         initMusicPlayer();
@@ -64,6 +62,15 @@ public class MusicService extends Service implements
         songs = theSongs;
     }
 
+    public void playOrPause() {
+        Log.v(TAG, "playOrPause ->");
+        if( player.isPlaying() ) {
+            currentPosition = player.getCurrentPosition();
+            player.pause();
+        } else {
+            playSong();
+        }
+    }
 
     public class MusicBinder extends Binder {
         MusicService getService() {
@@ -83,11 +90,12 @@ public class MusicService extends Service implements
         return false;
     }
 
-    public void playSong(){
+    public void playSong() {
+        Log.v(TAG, "playSong ->");
         //play a song
         player.reset();
         //get song
-        Song playSong = songs.get(songPosn);
+        Song playSong = songs.get(selectedSongNr);
         //get id
         long currSong = playSong.getID();
         //set uri
@@ -105,12 +113,15 @@ public class MusicService extends Service implements
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        Log.v(TAG, "onPrepared ->");
         //start playback
+        mp.seekTo(currentPosition);
         mp.start();
     }
 
     public void setSong(int songIndex){
-        songPosn = songIndex;
+        currentPosition = 0;
+        selectedSongNr = songIndex;
     }
 
 }
