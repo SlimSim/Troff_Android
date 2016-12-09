@@ -1,9 +1,10 @@
 package com.slimsimapps.troff;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,14 +21,16 @@ import java.util.Comparator;
 import android.net.Uri;
 import android.content.ContentResolver;
 import android.database.Cursor;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.os.IBinder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.view.MenuItem;
-import android.view.View;
+import android.widget.TextView;
+
 import com.slimsimapps.troff.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity
@@ -56,6 +59,11 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /**
+                 * FIXME: site2 här kanske jag vill ändra ikonen på play knappen,
+                 * eller vill jag det i själva musicSrv?
+                 */
+                Log.v(TAG, "fab onClick ->");
                 musicSrv.playOrPause();
             }
         });
@@ -102,8 +110,8 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.action_settings:
                 break;
-            case R.id.action_shuffle:
-                //shuffle
+            case R.id.action_create_marker:
+                createMarker();
                 break;
             case R.id.action_end:
                 stopService(playIntent);
@@ -142,6 +150,38 @@ public class MainActivity extends AppCompatActivity
 
 // --------------------------- below here is the own added methods :) ------------------------------
 
+    private void createMarker() {
+        Log.d(TAG, "createMarker ->");
+        final long time = musicSrv.getCurrentPosition();
+        final EditText nameView = new EditText(getContext());
+        new AlertDialog.Builder(getContext())
+                .setTitle("Create Marker")
+                .setMessage("create maeker at " + time)
+                .setView( nameView )
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which){
+                        Log.d(TAG, "create the marker");
+                        Log.d(TAG, "input = " + nameView.getText() );
+
+
+                        doMarker("" + nameView.getText(), time);
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which){
+                        Log.d(TAG, "no marker today :(");
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .show();
+    }
+
+    public void doMarker(String title, long time){
+        ((LinearLayout) findViewById(R.id.marker_list)).addView(
+                inflateMarker(new Marker(1, "" + title , time))
+        );
+    }
+
     public Context getContext() {
         return this;
     }
@@ -163,6 +203,21 @@ public class MainActivity extends AppCompatActivity
         });
         SongAdapter songAdt = new SongAdapter(this, songList);
         songView.setAdapter(songAdt);
+/*
+        for( int i = 0; i < 60; i++ ){
+            ((LinearLayout) findViewById(R.id.marker_list)).addView(
+                    inflateMarker(new Marker(1, "go to " + i*5 , i*5000))
+            );
+        }
+        */
+
+    }
+
+    private View inflateMarker( Marker marker ) {
+        View child = getLayoutInflater().inflate(R.layout.marker, null);
+        ((TextView) child.findViewById(R.id.marker_time)).setText("" + marker.getTime());
+        ((TextView) child.findViewById(R.id.marker_title)).setText("" + marker.getTitle());
+        return child;
     }
 
     //connect to the service
@@ -175,6 +230,15 @@ public class MainActivity extends AppCompatActivity
             musicSrv = binder.getService();
             //pass list
             musicSrv.setList(songList);
+            musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
+                @Override
+                public void notifyEndTime(long endTime) {
+                    Log.v(TAG, "notifyEndTime ->");
+                    doMarker("Start", 0);
+                    doMarker("Halfway", (endTime / 2)); // todo: ta bort denna :)
+                    doMarker("End", endTime);
+                }
+            });
             musicBound = true;
         }
 
@@ -227,8 +291,30 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void resetSonglistBackgroundColor() {
+        ListView songList = ((ListView) findViewById( R.id.song_list ));
+        for(int i = 0; i < songList.getChildCount(); i++ ) {
+            songList.getChildAt(i).setBackgroundColor(0);
+        }
+    }
+
     public void songPicked(View view){
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        musicSrv.playSong();
+        LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+
+
+
+        resetSonglistBackgroundColor();
+        view.setBackgroundColor( getResources().getColor( R.color.colorAccent ) );
+
+
+
+        markerList.removeAllViews();
+        // när låten är laddad kös notifyEndTime ovan, där sätts nya markörer.
+    }
+
+    public void selectMarker(View view) {
+        int t = Integer.parseInt("" + ((TextView) view.findViewById(R.id.marker_time)).getText());
+        musicSrv.seekTo( t );
     }
 }

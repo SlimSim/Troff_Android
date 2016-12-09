@@ -28,7 +28,11 @@ public class MusicService extends Service implements
     private int selectedSongNr;
     private final IBinder musicBind = new MusicBinder();
 
-    private int currentPosition = 0;
+    public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
+        this.ownOnPreparedListener = ownOnPreparedListener;
+    }
+
+    private OwnOnPreparedListener ownOnPreparedListener;
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
@@ -37,6 +41,7 @@ public class MusicService extends Service implements
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
+        Log.d(TAG, "onCompletion ->");
 
     }
 
@@ -65,11 +70,23 @@ public class MusicService extends Service implements
     public void playOrPause() {
         Log.v(TAG, "playOrPause ->");
         if( player.isPlaying() ) {
-            currentPosition = player.getCurrentPosition();
             player.pause();
         } else {
-            playSong();
+            player.start();
         }
+    }
+
+    public void seekTo(int time) {
+        player.seekTo( time );
+    }
+
+    public long getCurrentPosition() {
+        Log.d(TAG, "getCurrentPosition -> ");
+        return player.getCurrentPosition();
+    }
+
+    public long getDuration() {
+        return player.getDuration();
     }
 
     public class MusicBinder extends Binder {
@@ -90,8 +107,14 @@ public class MusicService extends Service implements
         return false;
     }
 
-    public void playSong() {
-        Log.v(TAG, "playSong ->");
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        ownOnPreparedListener.notifyEndTime(mp.getDuration());
+    }
+
+    public void setSong(int songIndex){
+        selectedSongNr = songIndex;
+
         //play a song
         player.reset();
         //get song
@@ -109,19 +132,11 @@ public class MusicService extends Service implements
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         player.prepareAsync();
+
     }
 
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        Log.v(TAG, "onPrepared ->");
-        //start playback
-        mp.seekTo(currentPosition);
-        mp.start();
-    }
-
-    public void setSong(int songIndex){
-        currentPosition = 0;
-        selectedSongNr = songIndex;
+    public interface OwnOnPreparedListener {
+        void notifyEndTime(long endTime);
     }
 
 }

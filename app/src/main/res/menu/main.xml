@@ -7,16 +7,16 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_shuffle"
+        android:id="@+id/action_create_marker"
         android:icon="@drawable/rand"
         android:orderInCategory="1"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         android:title="Shuffle"/>
 
     <item
         android:id="@+id/action_end"
         android:icon="@drawable/end"
         android:orderInCategory="2"
-        app:showAsAction="ifRoom"
+        app:showAsAction="never"
         android:title="End"/>
 </menu>
