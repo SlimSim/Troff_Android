@@ -1,20 +1,16 @@
 package com.slimsimapps.troff;
 
-import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
-import android.os.Handler;
 import android.os.IBinder;
 import java.util.ArrayList;
 import android.content.ContentUris;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
-import android.widget.LinearLayout;
 
 /**
  * Created on 2016-10-17, by Slim Sim
@@ -32,7 +28,11 @@ public class MusicService extends Service implements
     private int selectedSongNr;
     private final IBinder musicBind = new MusicBinder();
 
-    private int currentPosition = 0;
+    public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
+        this.ownOnPreparedListener = ownOnPreparedListener;
+    }
+
+    private OwnOnPreparedListener ownOnPreparedListener;
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
@@ -70,10 +70,9 @@ public class MusicService extends Service implements
     public void playOrPause() {
         Log.v(TAG, "playOrPause ->");
         if( player.isPlaying() ) {
-            currentPosition = player.getCurrentPosition();
             player.pause();
         } else {
-            playSong();
+            player.start();
         }
     }
 
@@ -108,8 +107,14 @@ public class MusicService extends Service implements
         return false;
     }
 
-    public void playSong() {
-        Log.v(TAG, "playSong ->");
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        ownOnPreparedListener.notifyEndTime(mp.getDuration());
+    }
+
+    public void setSong(int songIndex){
+        selectedSongNr = songIndex;
+
         //play a song
         player.reset();
         //get song
@@ -127,44 +132,11 @@ public class MusicService extends Service implements
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         player.prepareAsync();
+
     }
 
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        Log.v(TAG, "onPrepared ->");
-        //start playback
-        mp.seekTo(currentPosition);
-        mp.start();
-        MediaPlayer.OnSeekCompleteListener os = new MediaPlayer.OnSeekCompleteListener() {
-            @Override
-            public void onSeekComplete(MediaPlayer mp) {
-                Log.d(TAG, "onSeekComplete ->");
-            }
-        };
-
-        mp.setOnSeekCompleteListener( os );
-        Log.v(TAG, "mp.duration " + mp.getDuration() );
-/*
-        final long durr = mp.getDuration();
-
-        Handler handler = new Handler(getBaseContext().getMainLooper());
-
-        Runnable myRunnable = new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "running in runnable :) ");
-                ((LinearLayout)  handler.findViewById(R.id.marker_list)).addView(
-                        inflateMarker(new Marker(1, "End" , durr))
-                );
-            }
-        };
-        handler.post(myRunnable);
-*/
-    }
-
-    public void setSong(int songIndex){
-        currentPosition = 0;
-        selectedSongNr = songIndex;
+    public interface OwnOnPreparedListener {
+        void notifyEndTime(long endTime);
     }
 
 }

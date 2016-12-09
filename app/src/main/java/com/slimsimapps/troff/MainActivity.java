@@ -4,7 +4,6 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
@@ -30,8 +29,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
 
 import com.slimsimapps.troff.MusicService.MusicBinder;
@@ -62,6 +59,11 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                /**
+                 * FIXME: site2 här kanske jag vill ändra ikonen på play knappen,
+                 * eller vill jag det i själva musicSrv?
+                 */
+                Log.v(TAG, "fab onClick ->");
                 musicSrv.playOrPause();
             }
         });
@@ -228,6 +230,15 @@ public class MainActivity extends AppCompatActivity
             musicSrv = binder.getService();
             //pass list
             musicSrv.setList(songList);
+            musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
+                @Override
+                public void notifyEndTime(long endTime) {
+                    Log.v(TAG, "notifyEndTime ->");
+                    doMarker("Start", 0);
+                    doMarker("Halfway", (endTime / 2)); // todo: ta bort denna :)
+                    doMarker("End", endTime);
+                }
+            });
             musicBound = true;
         }
 
@@ -289,7 +300,6 @@ public class MainActivity extends AppCompatActivity
 
     public void songPicked(View view){
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        musicSrv.playSong();
         LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
 
 
@@ -300,10 +310,7 @@ public class MainActivity extends AppCompatActivity
 
 
         markerList.removeAllViews();
-        doMarker("Start", 0);
-
-        Log.d(TAG, "duration = ?");
-
+        // när låten är laddad kös notifyEndTime ovan, där sätts nya markörer.
     }
 
     public void selectMarker(View view) {
