@@ -14,4 +14,6 @@
     <string name="communicate">Communicate</string>
     <string name="share">Share</string>
     <string name="send">Send</string>
+    <string name="create_marker">Create marker</string>
+    <string name="create_marker_at">Create marker at</string>
 </resources>

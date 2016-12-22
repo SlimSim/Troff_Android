@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -31,18 +30,19 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.widget.TextView;
 
+import com.slimsimapps.troff.Models.Marker;
+import com.slimsimapps.troff.Models.Song;
 import com.slimsimapps.troff.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final String TAG = "MainActivity";
+//    private static final String TAG = "MainActivity";
 
     private ArrayList<Song> songList;
-    private ListView songView;
     private MusicService musicSrv;
     private Intent playIntent;
-    private boolean musicBound=false;
+//    private boolean musicBound=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +63,6 @@ public class MainActivity extends AppCompatActivity
                  * FIXME: site2 här kanske jag vill ändra ikonen på play knappen,
                  * eller vill jag det i själva musicSrv?
                  */
-                Log.v(TAG, "fab onClick ->");
                 musicSrv.playOrPause();
             }
         });
@@ -100,15 +99,10 @@ public class MainActivity extends AppCompatActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
 
         switch (item.getItemId()) {
             case R.id.action_settings:
+                musicSrv.printCurrSong();
                 break;
             case R.id.action_create_marker:
                 createMarker();
@@ -151,35 +145,28 @@ public class MainActivity extends AppCompatActivity
 // --------------------------- below here is the own added methods :) ------------------------------
 
     private void createMarker() {
-        Log.d(TAG, "createMarker ->");
         final long time = musicSrv.getCurrentPosition();
         final EditText nameView = new EditText(getContext());
         new AlertDialog.Builder(getContext())
-                .setTitle("Create Marker")
-                .setMessage("create maeker at " + time)
+                .setTitle(R.string.create_marker)
+                .setMessage( getResources().getString(R.string.create_marker_at) + " " + time)
                 .setView( nameView )
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){
-                        Log.d(TAG, "create the marker");
-                        Log.d(TAG, "input = " + nameView.getText() );
-
-
-                        doMarker("" + nameView.getText(), time);
+                        String name = nameView.getText().toString();
+                        doMarker(musicSrv.saveMarker(name, time));
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){
-                        Log.d(TAG, "no marker today :(");
                     }
                 })
                 .setIcon(android.R.drawable.ic_dialog_info)
                 .show();
     }
 
-    public void doMarker(String title, long time){
-        ((LinearLayout) findViewById(R.id.marker_list)).addView(
-                inflateMarker(new Marker(1, "" + title , time))
-        );
+    public void doMarker( Marker marker){
+        ((LinearLayout) findViewById(R.id.marker_list)).addView(inflateMarker(marker));
     }
 
     public Context getContext() {
@@ -187,7 +174,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void onCreate_own_code_fixing_songs() {
-        songView = (ListView)findViewById(R.id.song_list);
+        ListView songView = (ListView) findViewById(R.id.song_list);
         songList = new ArrayList<>();
         getSongList();
         Collections.sort(songList, new Comparator<Song>(){
@@ -196,27 +183,16 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        Collections.sort(songList, new Comparator<Song>(){
-            public int compare(Song a, Song b){
-                return a.getTitle().compareTo(b.getTitle());
-            }
-        });
         SongAdapter songAdt = new SongAdapter(this, songList);
         songView.setAdapter(songAdt);
-/*
-        for( int i = 0; i < 60; i++ ){
-            ((LinearLayout) findViewById(R.id.marker_list)).addView(
-                    inflateMarker(new Marker(1, "go to " + i*5 , i*5000))
-            );
-        }
-        */
 
     }
 
     private View inflateMarker( Marker marker ) {
         View child = getLayoutInflater().inflate(R.layout.marker, null);
-        ((TextView) child.findViewById(R.id.marker_time)).setText("" + marker.getTime());
-        ((TextView) child.findViewById(R.id.marker_title)).setText("" + marker.getTitle());
+        child.setTag(marker);
+        ((TextView) child.findViewById(R.id.marker_time)).setText( marker.getDisplayTime());
+        ((TextView) child.findViewById(R.id.marker_title)).setText(marker.getName());
         return child;
     }
 
@@ -233,18 +209,17 @@ public class MainActivity extends AppCompatActivity
             musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
                 @Override
                 public void notifyEndTime(long endTime) {
-                    Log.v(TAG, "notifyEndTime ->");
-                    doMarker("Start", 0);
-                    doMarker("Halfway", (endTime / 2)); // todo: ta bort denna :)
-                    doMarker("End", endTime);
+                    for(Marker marker : musicSrv.getCurrentMarkers() ){
+                        doMarker( marker );
+                    }
                 }
             });
-            musicBound = true;
+//            musicBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            musicBound = false;
+//            musicBound = false;
         }
     };
 
@@ -279,12 +254,18 @@ public class MainActivity extends AppCompatActivity
                     (android.provider.MediaStore.Audio.Media._ID);
             int artistColumn = musicCursor.getColumnIndex
                     (android.provider.MediaStore.Audio.Media.ARTIST);
+
             //add songs to list
             do {
-                long thisId = musicCursor.getLong(idColumn);
+                long fileId = musicCursor.getLong(idColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                songList.add(new Song(thisId, thisTitle, thisArtist));
+                //Song newSong = musicSrv.getSongFromDB( fileId, thisTitle, thisArtist );
+                Song newSong = new Song();
+                newSong.setTitle( thisTitle );
+                newSong.setArtist( thisArtist );
+                newSong.setFileId( fileId );
+                songList.add( newSong );
             }
             while (musicCursor.moveToNext());
             musicCursor.close();
@@ -302,11 +283,8 @@ public class MainActivity extends AppCompatActivity
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
         LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
 
-
-
         resetSonglistBackgroundColor();
-        view.setBackgroundColor( getResources().getColor( R.color.colorAccent ) );
-
+        view.setBackgroundColor( getResources().getColor( R.color.colorAccent ));
 
 
         markerList.removeAllViews();
@@ -314,7 +292,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void selectMarker(View view) {
-        int t = Integer.parseInt("" + ((TextView) view.findViewById(R.id.marker_time)).getText());
-        musicSrv.seekTo( t );
+        Marker marker = (Marker) view.getTag();
+        musicSrv.seekTo( (int) marker.getTime() );
     }
 }

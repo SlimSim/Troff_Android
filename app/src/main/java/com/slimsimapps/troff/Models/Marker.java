@@ -30,6 +30,16 @@ public class Marker {
         return time;
     }
 
+    public String getDisplayTime() {
+        long totSeconds = time / 1000;
+        long sec = totSeconds % 60;
+        long totMin = (totSeconds - sec) / 60;
+        long min = totMin % 60;
+        long totH = (totMin - min) / 60;
+        long h = totH % 60;
+        return "" + h + ":" + min + ":" + sec;
+    }
+
     public void setTime(long time) {
         this.time = time;
     }
