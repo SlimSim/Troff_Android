@@ -5,12 +5,19 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import java.util.ArrayList;
+import java.util.List;
+
 import android.content.ContentUris;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.util.Log;
+
+import com.slimsimapps.troff.Models.Marker;
+import com.slimsimapps.troff.Models.Song;
+import com.slimsimapps.troff.database.DB;
 
 /**
  * Created on 2016-10-17, by Slim Sim
@@ -24,9 +31,12 @@ public class MusicService extends Service implements
     private static final String TAG = "MusicService";
 
     private MediaPlayer player;
+    private final IBinder musicBind = new MusicBinder();
+
     private ArrayList<Song> songs;
     private int selectedSongNr;
-    private final IBinder musicBind = new MusicBinder();
+    private List<Marker> currentMarkers;
+    private DB db = new DB(MusicService.this);
 
     public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
         this.ownOnPreparedListener = ownOnPreparedListener;
@@ -41,16 +51,13 @@ public class MusicService extends Service implements
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        Log.d(TAG, "onCompletion ->");
-
+        Log.v(TAG, "onCompletion ->");
     }
 
     public void onCreate() {
-        //create the service
         super.onCreate();
-        //initialize position
+
         selectedSongNr = 0;
-        //create player
         player = new MediaPlayer();
         initMusicPlayer();
     }
@@ -68,11 +75,13 @@ public class MusicService extends Service implements
     }
 
     public void playOrPause() {
-        Log.v(TAG, "playOrPause ->");
         if( player.isPlaying() ) {
             player.pause();
         } else {
             player.start();
+            Song song = getSong();
+            song.incrementNrPlayed();
+            db.updateSong(song);
         }
     }
 
@@ -81,12 +90,32 @@ public class MusicService extends Service implements
     }
 
     public long getCurrentPosition() {
-        Log.d(TAG, "getCurrentPosition -> ");
         return player.getCurrentPosition();
     }
 
     public long getDuration() {
         return player.getDuration();
+    }
+
+    public List<Marker> getCurrentMarkers() {
+        return currentMarkers;
+    }
+
+    public Marker saveMarker(String name, long time) {
+        return db.insertMarker( new Marker(name, time, getCurrSongId() ) );
+    }
+
+    public void printCurrSong() {
+        Log.d(TAG, "printCurrSong: songs   = " + songs.get( selectedSongNr ) );
+        Log.d(TAG, "printCurrSong: fileId  = " + getCurrSongFileId() );
+        Log.d(TAG, "printCurrSong: db-song = " + db.getSong( getCurrSongFileId() ));
+    }
+
+    public int getCurrSongId() {
+        return songs.get( selectedSongNr ).getId();
+    }
+    public long getCurrSongFileId() {
+        return songs.get( selectedSongNr ).getFileId();
     }
 
     public class MusicBinder extends Binder {
@@ -109,22 +138,34 @@ public class MusicService extends Service implements
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        int songId = getCurrSongId();
+
+        currentMarkers = db.getAllMarkers( songId );
+
+        if( currentMarkers.size() == 0 ) {
+            Marker m = new Marker("Start", 0, songId);
+            db.insertMarker(m);
+            currentMarkers.add(m);
+            m = new Marker("Halfway", mp.getDuration() / 2, songId);
+            db.insertMarker(m);
+            currentMarkers.add(m);
+
+            m = new Marker("End", mp.getDuration(), songId);
+            db.insertMarker(m);
+            currentMarkers.add(m);
+        }
+
         ownOnPreparedListener.notifyEndTime(mp.getDuration());
     }
 
     public void setSong(int songIndex){
         selectedSongNr = songIndex;
-
-        //play a song
         player.reset();
-        //get song
-        Song playSong = songs.get(selectedSongNr);
-        //get id
-        long currSong = playSong.getID();
-        //set uri
+        Song song = getSong();
         Uri trackUri = ContentUris.withAppendedId(
-                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                currSong);
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                song.getFileId() );
+
         try{
             player.setDataSource(getApplicationContext(), trackUri);
         }
@@ -132,7 +173,20 @@ public class MusicService extends Service implements
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         player.prepareAsync();
+    }
 
+    private Song getSong() {
+        Song song = songs.get( selectedSongNr );
+
+        if( song.getId() == -1 ) {
+            Song dbSong = db.getSong( getCurrSongFileId() );
+            if( dbSong == null ) {
+                dbSong = db.insertSong( song );
+            }
+            song = dbSong;
+            songs.set( selectedSongNr, song );
+        }
+        return song;
     }
 
     public interface OwnOnPreparedListener {
