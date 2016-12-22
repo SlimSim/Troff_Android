@@ -9,37 +9,36 @@ import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.slimsimapps.troff.Models.Song;
+
 /**
  * Created 2016-10-17, by Slim Sim
  */
 
-public class SongAdapter extends BaseAdapter {
+class SongAdapter extends BaseAdapter {
 
-    private static final String TAG = "SongAdapter";
+    //private static final String TAG = "SongAdapter";
 
     private ArrayList<Song> songs;
     private LayoutInflater songInf;
 
-    public SongAdapter(Context c, ArrayList<Song> theSongs){
+    SongAdapter(Context c, ArrayList<Song> theSongs){
         songs=theSongs;
         songInf=LayoutInflater.from(c);
     }
 
     @Override
     public int getCount() {
-        // TODO Auto-generated method stub
         return songs.size();
     }
 
     @Override
     public Object getItem(int arg0) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public long getItemId(int arg0) {
-        // TODO Auto-generated method stub
         return 0;
     }
 
