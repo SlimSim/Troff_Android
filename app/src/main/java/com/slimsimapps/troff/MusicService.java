@@ -1,10 +1,14 @@
 package com.slimsimapps.troff;
 
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.content.ContentUris;
@@ -70,10 +74,6 @@ public class MusicService extends Service implements
         player.setOnErrorListener(this);
     }
 
-    public void setList(ArrayList<Song> theSongs){
-        songs = theSongs;
-    }
-
     public void playOrPause() {
         if( player.isPlaying() ) {
             player.pause();
@@ -93,9 +93,11 @@ public class MusicService extends Service implements
         return player.getCurrentPosition();
     }
 
+/*
     public long getDuration() {
         return player.getDuration();
     }
+*/
 
     public List<Marker> getCurrentMarkers() {
         return currentMarkers;
@@ -116,6 +118,51 @@ public class MusicService extends Service implements
     }
     public long getCurrSongFileId() {
         return songs.get( selectedSongNr ).getFileId();
+    }
+
+
+    public ArrayList<Song> setSongList() {
+
+        ArrayList<Song> songList = new ArrayList<>();
+
+        //retrieve song info
+        ContentResolver musicResolver = getContentResolver();
+        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
+
+        if (musicCursor != null && musicCursor.moveToFirst()) {
+            //get columns
+            int titleColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.TITLE);
+            int idColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media._ID);
+            int artistColumn = musicCursor.getColumnIndex
+                    (android.provider.MediaStore.Audio.Media.ARTIST);
+
+            //add songs to list
+            do {
+                long fileId = musicCursor.getLong(idColumn);
+                String thisTitle = musicCursor.getString(titleColumn);
+                String thisArtist = musicCursor.getString(artistColumn);
+                //Song newSong = musicSrv.getSongFromDB( fileId, thisTitle, thisArtist );
+                Song newSong = new Song();
+                newSong.setTitle( thisTitle );
+                newSong.setArtist( thisArtist );
+                newSong.setFileId( fileId );
+                songList.add( newSong );
+            }
+            while (musicCursor.moveToNext());
+            musicCursor.close();
+        }
+
+        Collections.sort(songList, new Comparator<Song>(){
+            public int compare(Song a, Song b){
+                return a.getTitle().compareTo(b.getTitle());
+            }
+        });
+
+        songs = songList;
+        return songList;
     }
 
     public class MusicBinder extends Binder {

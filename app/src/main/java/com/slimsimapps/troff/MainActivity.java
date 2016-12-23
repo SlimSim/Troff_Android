@@ -14,12 +14,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import android.net.Uri;
-import android.content.ContentResolver;
-import android.database.Cursor;
+
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -39,7 +36,6 @@ public class MainActivity extends AppCompatActivity
 
 //    private static final String TAG = "MainActivity";
 
-    private ArrayList<Song> songList;
     private MusicService musicSrv;
     private Intent playIntent;
 //    private boolean musicBound=false;
@@ -48,9 +44,6 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        onCreate_own_code_fixing_songs();
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -173,21 +166,6 @@ public class MainActivity extends AppCompatActivity
         return this;
     }
 
-    private void onCreate_own_code_fixing_songs() {
-        ListView songView = (ListView) findViewById(R.id.song_list);
-        songList = new ArrayList<>();
-        getSongList();
-        Collections.sort(songList, new Comparator<Song>(){
-            public int compare(Song a, Song b){
-                return a.getTitle().compareTo(b.getTitle());
-            }
-        });
-
-        SongAdapter songAdt = new SongAdapter(this, songList);
-        songView.setAdapter(songAdt);
-
-    }
-
     private View inflateMarker( Marker marker ) {
         View child = getLayoutInflater().inflate(R.layout.marker, null);
         child.setTag(marker);
@@ -204,8 +182,13 @@ public class MainActivity extends AppCompatActivity
             MusicBinder binder = (MusicBinder)service;
             //get service
             musicSrv = binder.getService();
-            //pass list
-            musicSrv.setList(songList);
+            ArrayList<Song> songList = musicSrv.setSongList();
+
+            ListView songView = (ListView) findViewById(R.id.song_list);
+            SongAdapter songAdt = new SongAdapter(getContext(), songList);
+            songView.setAdapter(songAdt);
+
+
             musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
                 @Override
                 public void notifyEndTime(long endTime) {
@@ -240,38 +223,6 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
     }
 
-    public void getSongList() {
-        //retrieve song info
-        ContentResolver musicResolver = getContentResolver();
-        Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Cursor musicCursor = musicResolver.query(musicUri, null, null, null, null);
-
-        if (musicCursor != null && musicCursor.moveToFirst()) {
-            //get columns
-            int titleColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.TITLE);
-            int idColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media._ID);
-            int artistColumn = musicCursor.getColumnIndex
-                    (android.provider.MediaStore.Audio.Media.ARTIST);
-
-            //add songs to list
-            do {
-                long fileId = musicCursor.getLong(idColumn);
-                String thisTitle = musicCursor.getString(titleColumn);
-                String thisArtist = musicCursor.getString(artistColumn);
-                //Song newSong = musicSrv.getSongFromDB( fileId, thisTitle, thisArtist );
-                Song newSong = new Song();
-                newSong.setTitle( thisTitle );
-                newSong.setArtist( thisArtist );
-                newSong.setFileId( fileId );
-                songList.add( newSong );
-            }
-            while (musicCursor.moveToNext());
-            musicCursor.close();
-        }
-    }
-
     private void resetSonglistBackgroundColor() {
         ListView songList = ((ListView) findViewById( R.id.song_list ));
         for(int i = 0; i < songList.getChildCount(); i++ ) {
@@ -285,7 +236,6 @@ public class MainActivity extends AppCompatActivity
 
         resetSonglistBackgroundColor();
         view.setBackgroundColor( getResources().getColor( R.color.colorAccent ));
-
 
         markerList.removeAllViews();
         // när låten är laddad kös notifyEndTime ovan, där sätts nya markörer.
