@@ -8,8 +8,9 @@ import android.database.Cursor;
  */
 
 final class DBContract {
-    //private static final String TAG = "DBContract";
 
+    @SuppressWarnings("unused")
+    private static final String TAG = "DBContract";
 
     static final  int    DATABASE_VERSION    = 1;
     static final  String DATABASE_NAME       = "database.db";

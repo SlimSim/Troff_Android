@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -28,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.slimsimapps.troff.Models.Marker;
 import com.slimsimapps.troff.Models.Song;
@@ -36,7 +38,8 @@ import com.slimsimapps.troff.MusicService.MusicBinder;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-//    private static final String TAG = "MainActivity";
+    @SuppressWarnings("unused")
+    private static final String TAG = "MainActivity";
 
     private MusicService musicSrv;
     private Intent playIntent;
@@ -50,18 +53,22 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        ActionBar ab = getSupportActionBar();
+        if(ab != null) ab.setTitle( R.string.pick_song );
+
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if( !musicSrv.isSongSelected() ){
+                    Toast.makeText(getContext(), "Pick a song first", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if( musicSrv.playOrPause() == MusicService.PlayStatus.PLAYING ){
                     fab.setImageResource(android.R.drawable.ic_media_pause);
                 } else {
                     fab.setImageResource(android.R.drawable.ic_media_play);
                 }
-
-
-
             }
         });
 
@@ -115,12 +122,20 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
+        switch( id ) {
+            case R.id.nav_song_list:
+                showSongList();
+                break;
+            case R.id.nav_markers:
+                showMarkerTimeLine();
+                break;
+        }
+        /*
         if (id == R.id.nav_camera) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
@@ -134,10 +149,25 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_send) {
 
         }
+*/
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void showMarkerTimeLine() {
+        if(musicSrv.isSongSelected()) {
+            findViewById(R.id.song_list).setVisibility(View.GONE);
+            findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
+        } else {
+            Toast.makeText(getContext(), "Pick a song first", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showSongList() {
+        findViewById( R.id.song_list ).setVisibility( View.VISIBLE );
+        findViewById( R.id.marker_include ).setVisibility( View.GONE );
     }
 
 // --------------------------- below here is the own added methods :) ------------------------------
@@ -241,6 +271,16 @@ public class MainActivity extends AppCompatActivity
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setImageResource(android.R.drawable.ic_media_play);
 
+        String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
+        String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
+
+//        getActionBar().setTitle(title + " by " + artist); // This gives null pointer exception?!?
+        ActionBar ab = getSupportActionBar();
+        if(ab != null) ab.setTitle( title + ", " + artist );
+
+        //TODO: How do I get the menu marker-list item selected?
+//        findViewById(R.id.nav_markers).callOnClick();
+        showMarkerTimeLine();
 
         markerList.removeAllViews();
         // The function notifyEndTime above will be called when the song is loaded

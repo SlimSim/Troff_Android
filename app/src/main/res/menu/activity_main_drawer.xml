@@ -3,10 +3,18 @@
 
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_song_list"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="@string/song_list"/>
+        <item
+            android:id="@+id/nav_markers"
+            android:icon="@drawable/ic_menu_share"
+            android:title="@string/markers"/>
+<!--
+        <item
             android:id="@+id/nav_camera"
             android:icon="@drawable/ic_menu_camera"
-            android:title="@string/importTitle"
-            android:name="Import" />
+            android:title="@string/song_list"/>
         <item
             android:id="@+id/nav_gallery"
             android:icon="@drawable/ic_menu_gallery"
@@ -22,8 +30,10 @@
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/tools"
             android:name="Tools" />
-    </group>
 
+-->
+    </group>
+<!--
     <item
         android:name="Communicate"
         android:title="@string/communicate">
@@ -40,5 +50,5 @@
                 android:name="Send" />
         </menu>
     </item>
-
+-->
 </menu>

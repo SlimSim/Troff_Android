@@ -17,6 +17,7 @@ import java.util.List;
  */
 public class DB extends SQLiteOpenHelper {
 
+    @SuppressWarnings("unused")
     private static final String TAG = "DB";
 
     private SQLiteDatabase database;

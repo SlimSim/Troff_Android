@@ -3,20 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:paddingTop="@dimen/nav_header_height_used_for_padding"
     android:orientation="vertical"
     tools:context="com.slimsimapps.troff.MainActivity" >
 
 
     <ListView
         android:id="@+id/song_list"
-        android:layout_width="fill_parent"
-        android:layout_height="200dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:background="#4187ef" >
     </ListView>
 
 
     <include
         layout="@layout/time_line"
+        android:visibility="gone"
+        android:id="@+id/marker_include"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

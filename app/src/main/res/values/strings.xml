@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Troff</string>
+    <string name="app_name_long">Troff - Training with music</string>
+    <string name="app_email">slimsimapps@gmail.com</string>
+    <string name="pick_song">Pick a song</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -16,4 +19,6 @@
     <string name="send">Send</string>
     <string name="create_marker">Create marker</string>
     <string name="create_marker_at">Create marker at</string>
+    <string name="song_list">Song list</string>
+    <string name="markers">Markers</string>
 </resources>

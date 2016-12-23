@@ -37,6 +37,7 @@ public class MusicService extends Service implements
         PAUSED
     }
 
+    @SuppressWarnings("unused")
     private static final String TAG = "MusicService";
 
     private MediaPlayer player;
@@ -49,6 +50,10 @@ public class MusicService extends Service implements
 
     public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
         this.ownOnPreparedListener = ownOnPreparedListener;
+    }
+
+    public boolean isSongSelected() {
+        return selectedSongNr != -1;
     }
 
     private OwnOnPreparedListener ownOnPreparedListener;
@@ -66,7 +71,7 @@ public class MusicService extends Service implements
     public void onCreate() {
         super.onCreate();
 
-        selectedSongNr = 0;
+        selectedSongNr = -1;
         player = new MediaPlayer();
         initMusicPlayer();
     }
@@ -212,7 +217,7 @@ public class MusicService extends Service implements
         ownOnPreparedListener.notifyEndTime(mp.getDuration());
     }
 
-    public void setSong(int songIndex){
+    public void setSong(int songIndex) {
         selectedSongNr = songIndex;
         player.reset();
         Song song = getSong();
