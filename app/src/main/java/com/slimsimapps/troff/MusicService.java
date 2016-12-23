@@ -32,6 +32,11 @@ public class MusicService extends Service implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
+    public enum PlayStatus {
+        PLAYING,
+        PAUSED
+    }
+
     private static final String TAG = "MusicService";
 
     private MediaPlayer player;
@@ -74,14 +79,16 @@ public class MusicService extends Service implements
         player.setOnErrorListener(this);
     }
 
-    public void playOrPause() {
+    public PlayStatus playOrPause() {
         if( player.isPlaying() ) {
             player.pause();
+            return PlayStatus.PAUSED;
         } else {
             player.start();
             Song song = getSong();
             song.incrementNrPlayed();
             db.updateSong(song);
+            return PlayStatus.PLAYING;
         }
     }
 

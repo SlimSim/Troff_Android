@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -48,15 +49,18 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /**
-                 * FIXME: site2 här kanske jag vill ändra ikonen på play knappen,
-                 * eller vill jag det i själva musicSrv?
-                 */
-                musicSrv.playOrPause();
+                if( musicSrv.playOrPause() == MusicService.PlayStatus.PLAYING ){
+                    fab.setImageResource(android.R.drawable.ic_media_pause);
+                } else {
+                    fab.setImageResource(android.R.drawable.ic_media_play);
+                }
+
+
+
             }
         });
 
@@ -183,11 +187,8 @@ public class MainActivity extends AppCompatActivity
             //get service
             musicSrv = binder.getService();
             ArrayList<Song> songList = musicSrv.setSongList();
-
             ListView songView = (ListView) findViewById(R.id.song_list);
-            SongAdapter songAdt = new SongAdapter(getContext(), songList);
-            songView.setAdapter(songAdt);
-
+            songView.setAdapter( new SongAdapter(getContext(), songList) );
 
             musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
                 @Override
@@ -230,12 +231,15 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void songPicked(View view){
+    public void songPicked(View view) {
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
         LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
 
         resetSonglistBackgroundColor();
-        view.setBackgroundColor( getResources().getColor( R.color.colorAccent ));
+        view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setImageResource(android.R.drawable.ic_media_play);
+
 
         markerList.removeAllViews();
         // när låten är laddad kös notifyEndTime ovan, där sätts nya markörer.
