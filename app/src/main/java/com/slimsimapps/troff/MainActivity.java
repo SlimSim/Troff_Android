@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity
                 .show();
     }
 
-    public void doMarker( Marker marker ) {
+    private void doMarker( Marker marker ) {
         View markerList = findViewById(R.id.marker_list);
         View child = getLayoutInflater().inflate(R.layout.marker, (ViewGroup) markerList, false);
         child.setTag(marker);
@@ -173,12 +173,12 @@ public class MainActivity extends AppCompatActivity
         ((LinearLayout) markerList).addView( child );
     }
 
-    public Context getContext() {
+    private Context getContext() {
         return this;
     }
 
     //connect to the service
-    private ServiceConnection musicConnection = new ServiceConnection(){
+    final private ServiceConnection musicConnection = new ServiceConnection(){
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
     }
 
-    private void resetSonglistBackgroundColor() {
+    private void resetSongListBackgroundColor() {
         ListView songList = ((ListView) findViewById( R.id.song_list ));
         for(int i = 0; i < songList.getChildCount(); i++ ) {
             songList.getChildAt(i).setBackgroundColor(0);
@@ -234,14 +234,15 @@ public class MainActivity extends AppCompatActivity
         musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
         LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
 
-        resetSonglistBackgroundColor();
+        resetSongListBackgroundColor();
         view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setImageResource(android.R.drawable.ic_media_play);
 
 
         markerList.removeAllViews();
-        // när låten är laddad kös notifyEndTime ovan, där sätts nya markörer.
+        // The function notifyEndTime above will be called when the song is loaded
+        // it will create the markers.
     }
 
     public void selectMarker(View view) {

@@ -45,7 +45,7 @@ public class MusicService extends Service implements
     private ArrayList<Song> songs;
     private int selectedSongNr;
     private List<Marker> currentMarkers;
-    private DB db = new DB(MusicService.this);
+    final private DB db = new DB(MusicService.this);
 
     public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
         this.ownOnPreparedListener = ownOnPreparedListener;
@@ -70,7 +70,7 @@ public class MusicService extends Service implements
         player = new MediaPlayer();
         initMusicPlayer();
     }
-    public void initMusicPlayer(){
+    private void initMusicPlayer(){
         player.setWakeMode(getApplicationContext(),
                 PowerManager.PARTIAL_WAKE_LOCK);
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -120,10 +120,10 @@ public class MusicService extends Service implements
         Log.d(TAG, "printCurrSong: db-song = " + db.getSong( getCurrSongFileId() ));
     }
 
-    public int getCurrSongId() {
+    private int getCurrSongId() {
         return songs.get( selectedSongNr ).getId();
     }
-    public long getCurrSongFileId() {
+    private long getCurrSongFileId() {
         return songs.get( selectedSongNr ).getFileId();
     }
 
