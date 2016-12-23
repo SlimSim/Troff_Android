@@ -147,7 +147,9 @@ public class MainActivity extends AppCompatActivity
         final EditText nameView = new EditText(getContext());
         new AlertDialog.Builder(getContext())
                 .setTitle(R.string.create_marker)
-                .setMessage( getResources().getString(R.string.create_marker_at) + " " + time)
+                .setMessage(
+                        getResources().getString(R.string.create_marker_at) +
+                        " " + Marker.getDisplayTime(time))
                 .setView( nameView )
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){

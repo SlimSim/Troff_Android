@@ -30,14 +30,24 @@ public class Marker {
         return time;
     }
 
+    public static String getDisplayTime(long totalMillis ) {
+        long totalSecs = totalMillis/1000,
+                hours, minutes, seconds;
+
+        hours = totalSecs / 3600;
+        minutes = (totalSecs % 3600) / 60;
+        seconds = totalSecs % 60;
+
+        String h, m, s;
+        h = (hours>0?""+hours+":":"");
+        m = (minutes<10?"0":"") + minutes + ":";
+        s = (seconds<10?"0":"") + seconds;
+
+        return h + m + s;
+    }
+
     public String getDisplayTime() {
-        long totSeconds = time / 1000;
-        long sec = totSeconds % 60;
-        long totMin = (totSeconds - sec) / 60;
-        long min = totMin % 60;
-        long totH = (totMin - min) / 60;
-        long h = totH % 60;
-        return "" + h + ":" + min + ":" + sec;
+        return getDisplayTime( time );
     }
 
     public void setTime(long time) {
