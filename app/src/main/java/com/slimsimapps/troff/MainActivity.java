@@ -18,6 +18,7 @@ import android.view.MenuItem;
 
 import java.util.ArrayList;
 
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -162,20 +163,18 @@ public class MainActivity extends AppCompatActivity
                 .show();
     }
 
-    public void doMarker( Marker marker){
-        ((LinearLayout) findViewById(R.id.marker_list)).addView(inflateMarker(marker));
+    public void doMarker( Marker marker ) {
+        View markerList = findViewById(R.id.marker_list);
+        View child = getLayoutInflater().inflate(R.layout.marker, (ViewGroup) markerList, false);
+        child.setTag(marker);
+        ((TextView) child.findViewById(R.id.marker_time)).setText( marker.getDisplayTime());
+        ((TextView) child.findViewById(R.id.marker_title)).setText(marker.getName());
+
+        ((LinearLayout) markerList).addView( child );
     }
 
     public Context getContext() {
         return this;
-    }
-
-    private View inflateMarker( Marker marker ) {
-        View child = getLayoutInflater().inflate(R.layout.marker, null);
-        child.setTag(marker);
-        ((TextView) child.findViewById(R.id.marker_time)).setText( marker.getDisplayTime());
-        ((TextView) child.findViewById(R.id.marker_title)).setText(marker.getName());
-        return child;
     }
 
     //connect to the service
