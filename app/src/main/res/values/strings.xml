@@ -9,7 +9,7 @@
 
     <string name="action_settings">Settings</string>
     <string name="shuffle">Shuffle</string>
-    <string name="end">End</string>
+    <string name="end">Quit app</string>
     <string name="importTitle">Import</string>
     <string name="gallery">Gallery</string>
     <string name="slideshow">Slideshow</string>

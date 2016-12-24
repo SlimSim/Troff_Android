@@ -106,9 +106,11 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
 
         switch (item.getItemId()) {
+/*
             case R.id.action_settings:
                 musicSrv.printCurrSong();
                 break;
+*/
             case R.id.action_create_marker:
                 createMarker();
                 break;
