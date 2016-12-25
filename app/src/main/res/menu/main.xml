@@ -11,15 +11,15 @@
 -->
     <item
         android:id="@+id/action_create_marker"
-        android:icon="@drawable/rand"
+        android:icon="@drawable/ic_marker"
         android:orderInCategory="1"
         app:showAsAction="ifRoom"
-        android:title="@string/shuffle"
-        android:name="Shuffle"/>
+        android:title="@string/marker"
+        android:name="Marker"/>
 
     <item
         android:id="@+id/action_end"
-        android:icon="@drawable/end"
+        android:icon="@drawable/ic_close_black_24dp"
         android:orderInCategory="2"
         app:showAsAction="never"
         android:title="@string/end"
