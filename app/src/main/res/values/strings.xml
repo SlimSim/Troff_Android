@@ -3,6 +3,7 @@
     <string name="app_name_long">Troff - Training with music</string>
     <string name="app_email">slimsimapps@gmail.com</string>
     <string name="pick_song">Pick a song</string>
+    <string name="pick_song_first">You must pick a song first</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 if( !musicSrv.isSongSelected() ){
-                    Toast.makeText(getContext(), "Pick a song first", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if( musicSrv.playOrPause() == MusicService.PlayStatus.PLAYING ){
@@ -159,12 +159,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showMarkerTimeLine() {
-        if(musicSrv.isSongSelected()) {
-            findViewById(R.id.song_list).setVisibility(View.GONE);
-            findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
-        } else {
-            Toast.makeText(getContext(), "Pick a song first", Toast.LENGTH_SHORT).show();
+        if( !musicSrv.isSongSelected() ) {
+            Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+            return;
         }
+        findViewById(R.id.song_list).setVisibility(View.GONE);
+        findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
     }
 
     private void showSongList() {
@@ -175,6 +175,10 @@ public class MainActivity extends AppCompatActivity
 // --------------------------- below here is the own added methods :) ------------------------------
 
     private void createMarker() {
+        if( !musicSrv.isSongSelected() ) {
+            Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+            return;
+        }
         final long time = musicSrv.getCurrentPosition();
         final EditText nameView = new EditText(getContext());
         new AlertDialog.Builder(getContext())
