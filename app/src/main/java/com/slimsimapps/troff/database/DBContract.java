@@ -20,6 +20,8 @@ final class DBContract {
     private static final String INT_TYPE            = " INT";
     private static final String LONG_TYPE           = " LONG";
     private static final String COMMA_SEP           = ",";
+    static final String ASCENDING                   = " ASC";
+    @SuppressWarnings("unused") static final String DESCENDING = " DESC";
 
     // To prevent someone from accidentally instantiating the contract class,
     // give it an empty constructor.

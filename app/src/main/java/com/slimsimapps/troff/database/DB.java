@@ -91,7 +91,15 @@ public class DB extends SQLiteOpenHelper {
 
     public List<Marker> getAllMarkers(int songId) {
         database = this.getReadableDatabase();
-        Cursor cursor = database.query(DBContract.Marker.T_NAME, null, DBContract.Marker.C_SONG_ID + " = ?", new String[]{""+songId}, null, null, null);
+        Cursor cursor = database.query(
+                DBContract.Marker.T_NAME, //table
+                null, // columns
+                DBContract.Marker.C_SONG_ID + " = ?", // filter columns
+                new String[]{""+songId}, //filter values
+                null, // group by
+                null, // having
+                DBContract.Marker.C_TIME + DBContract.ASCENDING // sortOrder
+        );
         List<Marker> markers = new ArrayList<>();
         Marker marker;
         if (cursor.getCount() > 0) {
