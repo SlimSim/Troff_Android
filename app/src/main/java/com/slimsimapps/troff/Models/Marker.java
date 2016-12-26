@@ -30,7 +30,7 @@ public class Marker {
         return time;
     }
 
-    public static String getDisplayTime(long totalMillis ) {
+    private static String getDisplayTime(long totalMillis) {
         long totalSecs = totalMillis/1000,
                 hours, minutes, seconds;
 

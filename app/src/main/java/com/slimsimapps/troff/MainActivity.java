@@ -43,12 +43,15 @@ public class MainActivity extends AppCompatActivity
 
     private MusicService musicSrv;
     private Intent playIntent;
+    private G G;
 //    private boolean musicBound=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        G = new G( this ); // initiate the global helper variable!
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -180,25 +183,36 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         final long time = musicSrv.getCurrentPosition();
-        final EditText nameView = new EditText(getContext());
+        //TODO; how do I get away with the 2 warnings here?
+        final View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
+        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( time/1000D ) );
+        editMarker.findViewById(R.id.marker_title).requestFocus();
         new AlertDialog.Builder(getContext())
                 .setTitle(R.string.create_marker)
-                .setMessage(
-                        getResources().getString(R.string.create_marker_at) +
-                        " " + Marker.getDisplayTime(time))
-                .setView( nameView )
+//                .setMessage(
+//                        getResources().getString(R.string.create_marker_at) +
+//                        " " + Marker.getDisplayTime(time))
+                .setView( editMarker )
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){
-                        String name = nameView.getText().toString();
-                        doMarker(musicSrv.saveMarker(name, time));
+
+                        G.hideKeyboard( getWindow() );
+                        String newStringTime = ((EditText) editMarker.findViewById(R.id.marker_time)).getText().toString();
+                        Long newTime = (long) (Double.parseDouble( newStringTime ) * 1000);
+
+                        String name = ((EditText) editMarker.findViewById(R.id.marker_title)).getText().toString();
+                        doMarker(musicSrv.saveMarker(name, newTime));
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which){
+                    public void onClick(DialogInterface dialog, int which) {
+                        G.hideKeyboard( getWindow() );
                     }
                 })
-                .setIcon(android.R.drawable.ic_dialog_info)
+                .setIcon(R.drawable.ic_marker)
                 .show();
+        G.showKeyboard();
+
     }
 
     private void doMarker( Marker marker ) {
