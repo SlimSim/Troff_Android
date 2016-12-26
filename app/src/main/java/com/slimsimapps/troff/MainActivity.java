@@ -177,6 +177,9 @@ public class MainActivity extends AppCompatActivity
 
 // --------------------------- below here is the own added methods :) ------------------------------
 
+    public void editMarker(View view) {
+    }
+
     private void createMarker() {
         if( !musicSrv.isSongSelected() ) {
             Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
@@ -187,6 +190,7 @@ public class MainActivity extends AppCompatActivity
         final View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
         ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( time/1000D ) );
         editMarker.findViewById(R.id.marker_title).requestFocus();
+        G.showKeyboard();
         new AlertDialog.Builder(getContext())
                 .setTitle(R.string.create_marker)
 //                .setMessage(
@@ -201,6 +205,11 @@ public class MainActivity extends AppCompatActivity
                         Long newTime = (long) (Double.parseDouble( newStringTime ) * 1000);
 
                         String name = ((EditText) editMarker.findViewById(R.id.marker_title)).getText().toString();
+
+                        if( name.isEmpty() ) {
+                            return;
+                        }
+
                         doMarker(musicSrv.saveMarker(name, newTime));
                     }
                 })
@@ -211,7 +220,6 @@ public class MainActivity extends AppCompatActivity
                 })
                 .setIcon(R.drawable.ic_marker)
                 .show();
-        G.showKeyboard();
 
     }
 
@@ -311,4 +319,9 @@ public class MainActivity extends AppCompatActivity
         Marker marker = (Marker) view.getTag();
         musicSrv.seekTo( (int) marker.getTime() );
     }
+
+    public void selectEndMarker(View view) {
+    }
+
+
 }
