@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -254,6 +255,19 @@ public class MainActivity extends AppCompatActivity
 
             final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
             final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
+
+            timeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {}
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    musicSrv.seekTo( seekBar.getProgress() );
+                }
+            });
 
             musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
                 @Override
