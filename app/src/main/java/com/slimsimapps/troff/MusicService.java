@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import android.content.ContentUris;
 import android.media.AudioManager;
@@ -29,7 +32,8 @@ import com.slimsimapps.troff.database.DB;
 
 
 public class MusicService extends Service implements
-        MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
+        MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
     public enum PlayStatus {
@@ -40,6 +44,8 @@ public class MusicService extends Service implements
     @SuppressWarnings("unused")
     private static final String TAG = "MusicService";
 
+    private ScheduledExecutorService schedule;
+
     private MediaPlayer player;
     private final IBinder musicBind = new MusicBinder();
 
@@ -47,16 +53,16 @@ public class MusicService extends Service implements
     private int selectedSongNr;
     private List<Marker> currentMarkers;
     final private DB db = new DB(MusicService.this);
+    private musicServiceListener musicServiceListener;
 
-    public void setOwnOnPreparedListener(OwnOnPreparedListener ownOnPreparedListener) {
-        this.ownOnPreparedListener = ownOnPreparedListener;
+
+    public void setMusicServiceListener(musicServiceListener musicServiceListener) {
+        this.musicServiceListener = musicServiceListener;
     }
 
     public boolean isSongSelected() {
         return selectedSongNr != -1;
     }
-
-    private OwnOnPreparedListener ownOnPreparedListener;
 
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
@@ -87,9 +93,21 @@ public class MusicService extends Service implements
     public PlayStatus playOrPause() {
         if( player.isPlaying() ) {
             player.pause();
+            schedule.shutdown();
             return PlayStatus.PAUSED;
         } else {
             player.start();
+
+            int delay = 0;
+            int period = 10;
+            schedule = Executors.newScheduledThreadPool(1);
+            schedule.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    musicServiceListener.getCurrentTime( getCurrentPosition() );
+                }
+            }, delay, period, TimeUnit.MILLISECONDS);
+
             Song song = getSong();
             song.incrementNrPlayed();
             db.updateSong(song);
@@ -119,6 +137,7 @@ public class MusicService extends Service implements
         return db.insertMarker( new Marker(name, time, getCurrSongId() ) );
     }
 
+    @SuppressWarnings("unused")
     public void printCurrSong() {
         Log.d(TAG, "printCurrSong: songs   = " + songs.get( selectedSongNr ) );
         Log.d(TAG, "printCurrSong: fileId  = " + getCurrSongFileId() );
@@ -214,7 +233,7 @@ public class MusicService extends Service implements
             currentMarkers.add(m);
         }
 
-        ownOnPreparedListener.notifyEndTime(mp.getDuration());
+        musicServiceListener.notifyEndTime(mp.getDuration());
     }
 
     public void setSong(int songIndex) {
@@ -248,8 +267,9 @@ public class MusicService extends Service implements
         return song;
     }
 
-    public interface OwnOnPreparedListener {
+    public interface musicServiceListener {
         void notifyEndTime(long endTime);
+        void getCurrentTime(long currentTime);
     }
 
 }

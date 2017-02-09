@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -250,12 +252,31 @@ public class MainActivity extends AppCompatActivity
             ListView songView = (ListView) findViewById(R.id.song_list);
             songView.setAdapter( new SongAdapter(getContext(), songList) );
 
-            musicSrv.setOwnOnPreparedListener(new MusicService.OwnOnPreparedListener() {
+            final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
+            final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
+
+            musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
                 @Override
                 public void notifyEndTime(long endTime) {
+                    timeBar.setMax( (int) endTime );
                     for(Marker marker : musicSrv.getCurrentMarkers() ){
                         doMarker( marker );
                     }
+                }
+
+                @Override
+                public void getCurrentTime(final long time) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String strTime = String.format("%02d:%02d",
+                                    TimeUnit.MILLISECONDS.toMinutes(time),
+                                    TimeUnit.MILLISECONDS.toSeconds(time) -
+                                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time)));
+                            currentDisplayTime.setText( strTime );
+                            timeBar.setProgress( (int) time );
+                        }
+                    });
                 }
             });
 //            musicBound = true;
@@ -303,7 +324,6 @@ public class MainActivity extends AppCompatActivity
         String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
         String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
 
-//        getActionBar().setTitle(title + " by " + artist); // This gives null pointer exception?!?
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setTitle( title + ", " + artist );
 
