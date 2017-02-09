@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.getMenu().getItem(0).setChecked(true);
     }
 
     @Override
@@ -306,8 +307,7 @@ public class MainActivity extends AppCompatActivity
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setTitle( title + ", " + artist );
 
-        //TODO: How do I get the menu marker-list item selected?
-//        findViewById(R.id.nav_markers).callOnClick();
+        ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
         showMarkerTimeLine();
 
         markerList.removeAllViews();
