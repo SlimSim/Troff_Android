@@ -141,6 +141,10 @@ public class MusicService extends Service implements
         return db.insertMarker( new Marker(name, time, getCurrSongId() ) );
     }
 
+    public void removeMarker(int markerId) {
+        db.removeMarker( getCurrSongId(), markerId );
+    }
+
     @SuppressWarnings("unused")
     public void printCurrSong() {
         Log.d(TAG, "printCurrSong: songs   = " + songs.get( selectedSongNr ) );

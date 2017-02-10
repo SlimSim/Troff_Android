@@ -80,14 +80,25 @@ public class DB extends SQLiteOpenHelper {
         return marker;
     }
 
-    /*
+    public void removeMarker(int songId, int markerId) {
+        database = this.getReadableDatabase();
+        database.delete(
+                DBContract.Marker.T_NAME, //table
+                DBContract.Marker.C_SONG_ID + "=? and " +
+                DBContract.Marker.C_ID + "=?", // whereClause
+                new String[]{String.valueOf(songId), String.valueOf(markerId)} // whereArgs
+        );
+        database.close();
+    }
+
+    @SuppressWarnings("unused")
     public void updateMarker(Marker marker) {
         database = this.getReadableDatabase();
         ContentValues cv = DBContract.Marker.getContentValues( marker );
         database.update(DBContract.Marker.T_NAME, cv, DBContract.Marker.C_ID + " = ?", new String[]{""+marker.getId()});
         database.close();
     }
-    */
+
 
     public List<Marker> getAllMarkers(int songId) {
         database = this.getReadableDatabase();
