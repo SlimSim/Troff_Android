@@ -123,6 +123,10 @@ public class MusicService extends Service implements
         return player.getCurrentPosition();
     }
 
+    public int getSelectedSongNr() {
+        return selectedSongNr;
+    }
+
 /*
     public long getDuration() {
         return player.getDuration();

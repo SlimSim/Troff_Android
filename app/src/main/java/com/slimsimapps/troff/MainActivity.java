@@ -251,7 +251,7 @@ public class MainActivity extends AppCompatActivity
             musicSrv = binder.getService();
             ArrayList<Song> songList = musicSrv.setSongList();
             ListView songView = (ListView) findViewById(R.id.song_list);
-            songView.setAdapter( new SongAdapter(getContext(), songList) );
+            songView.setAdapter( new SongAdapter(getContext(), songList, musicSrv) );
 
             final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
             final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
