@@ -6,6 +6,7 @@
     android:padding="5dp" >
 
     <LinearLayout
+        android:id="@+id/edit_marker_time_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">

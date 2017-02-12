@@ -30,4 +30,6 @@
     <string name="end_song_here">End song here</string>
     <string name="edit_marker">Edit marker</string>
     <string name="time_unknown">xx:xx</string>
+    <string name="delete">Delete</string>
+    <string name="about_to_delete">You are about to delete this marker</string>
 </resources>

@@ -182,6 +182,66 @@ public class MainActivity extends AppCompatActivity
 // --------------------------- below here is the own added methods :) ------------------------------
 
     public void editMarker(View view) {
+        //todo: make all markers attribute editable :)
+
+        final LinearLayout parent =(LinearLayout) view.getParent();
+        final Marker m = (Marker) parent.getTag();
+
+        View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
+        editMarker.findViewById( R.id.edit_marker_time_row ).setVisibility( View.GONE ); // todo: remove
+        ((TextView) editMarker.findViewById(R.id.marker_title)).setText( m.getName() );
+//        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( m.getTime() ) ); // or DisplayTime?
+//        editMarker.findViewById(R.id.marker_title).requestFocus();
+//        G.showKeyboard(); //todo: show keyboard
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.edit_marker)
+                .setView( editMarker )
+                .setNeutralButton( R.string.delete, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        G.hideKeyboard( getWindow() );
+                        new AlertDialog.Builder(getContext())
+                                .setTitle( R.string.delete )
+                                .setMessage(R.string.about_to_delete)
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        ((LinearLayout) parent.getParent()).removeView(parent);
+                                        musicSrv.removeMarker( m.getId() );
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        G.hideKeyboard( getWindow() );
+                                    }
+                                })
+                                .setIcon(R.drawable.ic_marker) //todo: fix a "warnign" icon
+                                .show();
+                    }
+                })
+                /*
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which){
+
+                        G.hideKeyboard( getWindow() );
+                        String newStringTime = ((EditText) editMarker.findViewById(R.id.marker_time)).getText().toString();
+                        Long newTime = (long) (Double.parseDouble( newStringTime ) * 1000);
+
+                        String name = ((EditText) editMarker.findViewById(R.id.marker_title)).getText().toString();
+
+                        if( name.isEmpty() ) {
+                            return;
+                        }
+
+                        doMarker(musicSrv.saveMarker(name, newTime));
+                    }
+                })
+                */
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        G.hideKeyboard( getWindow() );
+                    }
+                })
+                .setIcon(R.drawable.ic_marker)
+                .show();
     }
 
     private void createMarker() {
