@@ -275,6 +275,7 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         doMarker(musicSrv.saveMarker(name, newTime));
+
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -287,14 +288,24 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void doMarker( Marker marker ) {
+    private void doMarker( Marker newMarker ) {
         View markerList = findViewById(R.id.marker_list);
-        View child = getLayoutInflater().inflate(R.layout.marker, (ViewGroup) markerList, false);
-        child.setTag(marker);
-        ((TextView) child.findViewById(R.id.marker_time)).setText( marker.getDisplayTime());
-        ((TextView) child.findViewById(R.id.marker_title)).setText(marker.getName());
+        View newMarkerView = getLayoutInflater().inflate(R.layout.marker, (ViewGroup) markerList, false);
+        newMarkerView.setTag( newMarker );
+        ((TextView) newMarkerView.findViewById(R.id.marker_time)).setText( newMarker.getDisplayTime());
+        ((TextView) newMarkerView.findViewById(R.id.marker_title)).setText(newMarker.getName());
 
-        ((LinearLayout) markerList).addView( child );
+        int size = ((ViewGroup) markerList).getChildCount();
+
+        for(int i = 0; i < size; i++ ) {
+            Marker m = (Marker) ((ViewGroup) markerList).getChildAt(i).getTag();
+            if( newMarker.getTime() < m.getTime() ) {
+                ((ViewGroup) markerList).addView( newMarkerView, i );
+                return;
+            }
+        }
+
+        ((ViewGroup) markerList).addView( newMarkerView );
     }
 
     private Context getContext() {
