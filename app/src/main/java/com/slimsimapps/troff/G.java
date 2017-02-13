@@ -5,6 +5,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created on 2016-12-25, by Slim Sim Apps.
  */
@@ -32,5 +34,12 @@ class G {
         window.setSoftInputMode(
             WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
         );
+    }
+
+    final String getDisplayTime( long timeMillis ) {
+        return String.format("%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes( timeMillis ),
+                TimeUnit.MILLISECONDS.toSeconds( timeMillis ) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(timeMillis)));
     }
 }

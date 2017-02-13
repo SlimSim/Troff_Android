@@ -232,9 +232,11 @@ public class MusicService extends Service implements
             Marker m = new Marker("Start", 0, songId);
             db.insertMarker(m);
             currentMarkers.add(m);
+/*
             m = new Marker("Halfway", mp.getDuration() / 2, songId);
             db.insertMarker(m);
             currentMarkers.add(m);
+*/
 
             m = new Marker("End", mp.getDuration(), songId);
             db.insertMarker(m);
@@ -247,6 +249,10 @@ public class MusicService extends Service implements
     public void setSong(int songIndex) {
         selectedSongNr = songIndex;
         player.reset();
+        //todo: ev fix better way to handle the schedule
+        if( schedule != null && !schedule.isTerminated() ) {
+            schedule.shutdownNow();
+        }
         Song song = getSong();
         Uri trackUri = ContentUris.withAppendedId(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,

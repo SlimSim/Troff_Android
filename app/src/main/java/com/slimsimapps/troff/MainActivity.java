@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity
         final long time = musicSrv.getCurrentPosition();
         //TODO; how do I get away with the 2 warnings here?
         final View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
-        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( time/1000D ) );
+        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( G.getDisplayTime(time) );
         editMarker.findViewById(R.id.marker_title).requestFocus();
         G.showKeyboard();
         new AlertDialog.Builder(getContext())
@@ -324,7 +324,6 @@ public class MainActivity extends AppCompatActivity
             ListView songView = (ListView) findViewById(R.id.song_list);
             songView.setAdapter( new SongAdapter(getContext(), songList, musicSrv) );
 
-            final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
             final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
 
             timeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -344,6 +343,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void notifyEndTime(long endTime) {
                     timeBar.setMax( (int) endTime );
+                    updateUiTime( 0 );
                     for(Marker marker : musicSrv.getCurrentMarkers() ){
                         doMarker( marker );
                     }
@@ -354,17 +354,11 @@ public class MainActivity extends AppCompatActivity
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            String strTime = String.format("%02d:%02d",
-                                    TimeUnit.MILLISECONDS.toMinutes(time),
-                                    TimeUnit.MILLISECONDS.toSeconds(time) -
-                                            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time)));
-                            currentDisplayTime.setText( strTime );
-                            timeBar.setProgress( (int) time );
+                            updateUiTime( time );
                         }
                     });
                 }
             });
-//            musicBound = true;
         }
 
         @Override
@@ -423,10 +417,17 @@ public class MainActivity extends AppCompatActivity
     public void selectMarker(View view) {
         Marker marker = (Marker) view.getTag();
         musicSrv.seekTo( (int) marker.getTime() );
+        updateUiTime( marker.getTime() );
     }
 
     public void selectEndMarker(View view) {
     }
 
 
+    private void updateUiTime( long time ) {
+        final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
+        final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
+        timeBar.setProgress( (int) time );
+        ((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
+    }
 }
