@@ -168,6 +168,12 @@ public class MainActivity extends AppCompatActivity
     private void showMarkerTimeLine() {
         if( !musicSrv.isSongSelected() ) {
             Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+            new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        public void run() {
+                            ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
+                        }
+                    }, 0);
             return;
         }
         findViewById(R.id.song_list).setVisibility(View.GONE);
