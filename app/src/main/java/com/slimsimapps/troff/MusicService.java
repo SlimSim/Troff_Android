@@ -71,7 +71,14 @@ public class MusicService extends Service implements
 
     @Override
     public void onCompletion(MediaPlayer mediaPlayer) {
-        Log.v(TAG, "onCompletion ->");
+        completeSong();
+    }
+
+    private void completeSong() {
+        musicServiceListener.songCompleted();
+        player.seekTo( 0 );
+        player.pause();
+        schedule.shutdownNow();
     }
 
     public void onCreate() {
@@ -90,28 +97,36 @@ public class MusicService extends Service implements
         player.setOnErrorListener(this);
     }
 
+    private PlayStatus pause() {
+        player.pause();
+        schedule.shutdownNow();
+        return PlayStatus.PAUSED;
+    }
+
+    private PlayStatus play() {
+        player.start();
+
+        int delay = 0;
+        int period = 10;
+        schedule = Executors.newScheduledThreadPool(1);
+        schedule.scheduleWithFixedDelay(new Runnable() {
+            @Override
+            public void run() {
+                musicServiceListener.getCurrentTime( getCurrentPosition() );
+            }
+        }, delay, period, TimeUnit.MILLISECONDS);
+
+        Song song = getSong();
+        song.incrementNrPlayed();
+        db.updateSong(song);
+        return PlayStatus.PLAYING;
+    }
+
     public PlayStatus playOrPause() {
         if( player.isPlaying() ) {
-            player.pause();
-            schedule.shutdown();
-            return PlayStatus.PAUSED;
+            return this.pause();
         } else {
-            player.start();
-
-            int delay = 0;
-            int period = 10;
-            schedule = Executors.newScheduledThreadPool(1);
-            schedule.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    musicServiceListener.getCurrentTime( getCurrentPosition() );
-                }
-            }, delay, period, TimeUnit.MILLISECONDS);
-
-            Song song = getSong();
-            song.incrementNrPlayed();
-            db.updateSong(song);
-            return PlayStatus.PLAYING;
+            return play();
         }
     }
 
@@ -247,6 +262,9 @@ public class MusicService extends Service implements
     }
 
     public void setSong(int songIndex) {
+        if( player.isPlaying() ) {
+            this.pause();
+        }
         selectedSongNr = songIndex;
         player.reset();
         //todo: ev fix better way to handle the schedule
@@ -284,6 +302,7 @@ public class MusicService extends Service implements
     public interface musicServiceListener {
         void notifyEndTime(long endTime);
         void getCurrentTime(long currentTime);
+        void songCompleted();
     }
 
 }

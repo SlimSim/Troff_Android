@@ -349,7 +349,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void notifyEndTime(long endTime) {
                     timeBar.setMax( (int) endTime );
-                    updateUiTime( 0 );
                     for(Marker marker : musicSrv.getCurrentMarkers() ){
                         doMarker( marker );
                     }
@@ -361,6 +360,16 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void run() {
                             updateUiTime( time );
+                        }
+                    });
+                }
+
+                @Override
+                public void songCompleted() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            resetSong();
                         }
                     });
                 }
@@ -403,8 +412,7 @@ public class MainActivity extends AppCompatActivity
 
         resetSongListBackgroundColor();
         view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setImageResource(android.R.drawable.ic_media_play);
+        resetSong();
 
         String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
         String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
@@ -429,9 +437,13 @@ public class MainActivity extends AppCompatActivity
     public void selectEndMarker(View view) {
     }
 
+    private void resetSong() {
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setImageResource(android.R.drawable.ic_media_play);
+        updateUiTime( 0 );
+    }
 
     private void updateUiTime( long time ) {
-        final TextView currentDisplayTime = (TextView) findViewById(R.id.currentDisplayTime);
         final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
         timeBar.setProgress( (int) time );
         ((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
