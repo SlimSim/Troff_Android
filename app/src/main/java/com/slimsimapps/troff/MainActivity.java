@@ -205,6 +205,11 @@ public class MainActivity extends AppCompatActivity
                 .setNeutralButton( R.string.delete, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         G.hideKeyboard( getWindow() );
+                        if( musicSrv.getCurrentMarkers().size() <= 2 ) {
+                            Toast.makeText(getContext(), R.string.instr_no_fewer_than_2_markers,
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         new AlertDialog.Builder(getContext())
                                 .setTitle( R.string.delete )
                                 .setMessage(R.string.about_to_delete)

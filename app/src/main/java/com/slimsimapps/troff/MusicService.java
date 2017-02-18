@@ -153,11 +153,14 @@ public class MusicService extends Service implements
     }
 
     public Marker saveMarker(String name, long time) {
-        return db.insertMarker( new Marker(name, time, getCurrSongId() ) );
+        Marker m = db.insertMarker( new Marker(name, time, getCurrSongId() ) );
+        currentMarkers = db.getAllMarkers( getCurrSongId() );
+        return m;
     }
 
     public void removeMarker(int markerId) {
         db.removeMarker( getCurrSongId(), markerId );
+        currentMarkers = db.getAllMarkers( getCurrSongId() );
     }
 
     @SuppressWarnings("unused")
