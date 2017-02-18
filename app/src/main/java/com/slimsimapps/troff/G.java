@@ -1,6 +1,7 @@
 package com.slimsimapps.troff;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -41,5 +42,34 @@ class G {
                 TimeUnit.MILLISECONDS.toMinutes( timeMillis ),
                 TimeUnit.MILLISECONDS.toSeconds( timeMillis ) -
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(timeMillis)));
+    }
+
+    final String getDetailedDisplayTime( long timeMillis ) {
+        String time = getDisplayTime( timeMillis );
+        long remainder = timeMillis % 1000;
+        String millis = "" + remainder;
+        if( remainder < 10 ) {
+            millis = "00" + remainder;
+        } else if( remainder < 100 ) {
+            millis = "0" + remainder;
+        }
+        return time + "." + millis;
+    }
+
+    final long getTimeFromDetailedDisplay( String time ) {
+        int length = time.length();
+        if( length != 9 ) {
+            Log.w(TAG, "getTimeFromDetailedDisplay, wrong length for input time");
+            return -1;
+        }
+        try {
+            long millis = Long.parseLong(time.substring(length - 3, length));
+            long seconds = Long.parseLong(time.substring(length - 6, length - 4));
+            long minutes = Long.parseLong(time.substring(length - 9, length - 7));
+            return 60000 * minutes + 1000 * seconds + millis;
+        } catch ( Exception e ) {
+            Log.e( TAG, "getTimeFromDetailedDisplay, wrong format for time, e = " + e );
+            return -1;
+        }
     }
 }

@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity
         final long time = musicSrv.getCurrentPosition();
         //TODO; how do I get away with the 2 warnings here?
         final View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
-        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( G.getDisplayTime(time) );
+        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( G.getDetailedDisplayTime(time) );
         editMarker.findViewById(R.id.marker_title).requestFocus();
         G.showKeyboard();
         new AlertDialog.Builder(getContext())
@@ -272,11 +272,18 @@ public class MainActivity extends AppCompatActivity
 
                         G.hideKeyboard( getWindow() );
                         String newStringTime = ((EditText) editMarker.findViewById(R.id.marker_time)).getText().toString();
-                        Long newTime = (long) (Double.parseDouble( newStringTime ) * 1000);
+                        Long newTime = G.getTimeFromDetailedDisplay( newStringTime );
 
                         String name = ((EditText) editMarker.findViewById(R.id.marker_title)).getText().toString();
 
                         if( name.isEmpty() ) {
+                            Toast.makeText(getContext(),
+                                    R.string.instr_name_marker, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if( newTime == -1 ) {
+                            Toast.makeText(getContext(),
+                                    R.string.instr_correkt_marker_time, Toast.LENGTH_SHORT).show();
                             return;
                         }
 
