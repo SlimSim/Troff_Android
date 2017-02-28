@@ -5,7 +5,7 @@
     android:layout_height="fill_parent"
     android:paddingTop="@dimen/nav_header_height_used_for_padding"
     android:orientation="vertical"
-    tools:context="com.slimsimapps.troff.MainActivity" >
+    tools:context="slimsimapps.troff.MainActivity" >
 
 
     <ListView

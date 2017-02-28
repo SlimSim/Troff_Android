@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.slimsimapps.troff">
+    package="slimsimapps.troff">
 
     <!--
     Troff - Training with music is a musicplayer for dancers, musissians
@@ -33,10 +33,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.slimsimapps.troff.MainActivity"
+            android:name="slimsimapps.troff.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,7 +43,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="com.slimsimapps.troff.MusicService" />
+        <service android:name="slimsimapps.troff.MusicService" />
     </application>
 
 </manifest>
