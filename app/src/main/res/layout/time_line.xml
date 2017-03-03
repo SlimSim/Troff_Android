@@ -13,14 +13,16 @@
         android:background="@color/colorPrimaryLIGHTEST"
         android:orientation="vertical">
         <FrameLayout
+            android:id="@+id/timeBarParent"
+            android:layout_weight="1"
             android:layout_width="42dip"
-            android:layout_height="580dip">
-        <SeekBar
-            android:rotation="90"
-            android:id="@+id/timeBar"
-            android:layout_width="580dip"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_height="0dp">
+            <SeekBar
+                android:rotation="90"
+                android:id="@+id/timeBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
         </FrameLayout>
         <TextView
             android:layout_width="match_parent"

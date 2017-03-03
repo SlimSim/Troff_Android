@@ -1,6 +1,7 @@
 package slimsimapps.troff;
 
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -19,10 +20,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.os.IBinder;
@@ -48,6 +50,8 @@ public class MainActivity extends AppCompatActivity
     private Intent playIntent;
     private G G;
 //    private boolean musicBound=false;
+
+    ViewTreeObserver.OnGlobalLayoutListener onRotationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +91,21 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navigationView.getMenu().getItem(0).setChecked(true);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        final View view = findViewById( R.id.timeBarParent );
+
+        onRotationListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                recalculateTimeLine();
+                view.getViewTreeObserver().removeOnGlobalLayoutListener( onRotationListener );
+            }
+        };
+        view.getViewTreeObserver().addOnGlobalLayoutListener( onRotationListener );
     }
 
     @Override
@@ -178,6 +197,25 @@ public class MainActivity extends AppCompatActivity
         }
         findViewById(R.id.song_list).setVisibility(View.GONE);
         findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
+
+        recalculateTimeLineSoon();
+    }
+
+    private void recalculateTimeLineSoon() {
+        new android.os.Handler().postDelayed(
+                new Runnable() {
+                    public void run() {
+                        recalculateTimeLine();
+                    }
+                }, 0);
+    }
+
+    private void recalculateTimeLine() {
+        FrameLayout parent = (FrameLayout) findViewById( R.id.timeBarParent );
+        SeekBar seekBar = (SeekBar) findViewById( R.id.timeBar );
+
+        seekBar.getLayoutParams().width = parent.getHeight();
+        seekBar.requestLayout();
     }
 
     private void showSongList() {
@@ -407,6 +445,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         stopService(playIntent);
+        unbindService(musicConnection);
         musicSrv=null;
         super.onDestroy();
     }

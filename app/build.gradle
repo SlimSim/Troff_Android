@@ -5,7 +5,7 @@ android {
     buildToolsVersion "24.0.1"
     defaultConfig {
         applicationId "slimsimapps.troff"
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 21 //TODO: set to 24 and implement runtimepremissions (using 21 for now)
         versionCode 6
         versionName "0.0.2"
