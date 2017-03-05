@@ -7,7 +7,7 @@ android {
         applicationId "slimsimapps.troff"
         minSdkVersion 16
         targetSdkVersion 21 //TODO: set to 24 and implement runtimepremissions (using 21 for now)
-        versionCode 6
+        versionCode 7
         versionName "0.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
