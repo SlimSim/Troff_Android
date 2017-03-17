@@ -1,10 +1,13 @@
 package slimsimapps.troff;
 
+import android.Manifest;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -45,6 +48,8 @@ public class MainActivity extends AppCompatActivity
 
     @SuppressWarnings("unused")
     private static final String TAG = "MainActivity";
+
+	private final int READ_EXTERNAL_STORAGE_INT = 3;
 
     private MusicService musicSrv;
     private Intent playIntent;
@@ -368,7 +373,37 @@ public class MainActivity extends AppCompatActivity
         return this;
     }
 
-    //connect to the service
+	public boolean haveExternalPermission() {
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+				== PackageManager.PERMISSION_GRANTED) {
+			return true;
+		} else {
+			ActivityCompat.requestPermissions(this,
+					new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+					READ_EXTERNAL_STORAGE_INT);
+			return false;
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+		switch (requestCode) {
+			case READ_EXTERNAL_STORAGE_INT: {
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0
+						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					initiateMusicService();
+				} else {
+					new AlertDialog.Builder(getContext())
+							.setTitle("Extornal storage krävs")
+							.setMessage("för att kunna köra Troff :) ")
+							.show();
+				}
+			}
+		}
+	}
+
+	//connect to the service
     final private ServiceConnection musicConnection = new ServiceConnection(){
 
         @Override
@@ -376,63 +411,70 @@ public class MainActivity extends AppCompatActivity
             MusicBinder binder = (MusicBinder)service;
             //get service
             musicSrv = binder.getService();
-            ArrayList<Song> songList = musicSrv.setSongList();
-            ListView songView = (ListView) findViewById(R.id.song_list);
-            songView.setAdapter( new SongAdapter(getContext(), songList, musicSrv) );
-
-            final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
-
-            timeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int i, boolean b) {}
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    musicSrv.seekTo( seekBar.getProgress() );
-                }
-            });
-
-            musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
-                @Override
-                public void notifyEndTime(long endTime) {
-                    timeBar.setMax( (int) endTime );
-                    for(Marker marker : musicSrv.getCurrentMarkers() ){
-                        doMarker( marker );
-                    }
-                }
-
-                @Override
-                public void getCurrentTime(final long time) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            updateUiTime( time );
-                        }
-                    });
-                }
-
-                @Override
-                public void songCompleted() {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            resetSong();
-                        }
-                    });
-                }
-            });
+			if( haveExternalPermission() ) {
+				initiateMusicService();
+			}
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-//            musicBound = false;
+	        musicSrv = null;
         }
     };
 
-    @Override
+	public void initiateMusicService() {
+		ArrayList<Song> songList = musicSrv.setSongList();
+		ListView songView = (ListView) findViewById(R.id.song_list);
+		songView.setAdapter(new SongAdapter(getContext(), songList, musicSrv));
+
+		final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
+
+		timeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				musicSrv.seekTo( seekBar.getProgress() );
+			}
+		});
+
+		musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
+			@Override
+			public void notifyEndTime(long endTime) {
+				timeBar.setMax( (int) endTime );
+				for(Marker marker : musicSrv.getCurrentMarkers() ){
+					doMarker( marker );
+				}
+			}
+
+			@Override
+			public void getCurrentTime(final long time) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						updateUiTime( time );
+					}
+				});
+			}
+
+			@Override
+			public void songCompleted() {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Log.v(TAG, "songCompleted -> resetSongUi ");
+						resetSongUI();
+					}
+				});
+			}
+		});
+	}
+
+	@Override
     protected void onStart() {
         super.onStart();
         if(playIntent==null){
@@ -463,7 +505,7 @@ public class MainActivity extends AppCompatActivity
 
         resetSongListBackgroundColor();
         view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
-        resetSong();
+        resetSongUI();
 
         String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
         String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
@@ -481,17 +523,18 @@ public class MainActivity extends AppCompatActivity
 
     public void selectMarker(View view) {
         Marker marker = (Marker) view.getTag();
-        musicSrv.seekTo( (int) marker.getTime() );
-        updateUiTime( marker.getTime() );
+        musicSrv.selectStartMarker( marker );
     }
 
     public void selectEndMarker(View view) {
+        Marker marker = (Marker) ((View) view.getParent()).getTag();
+        musicSrv.selectEndMarker( marker );
     }
 
-    private void resetSong() {
+	private void resetSongUI() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setImageResource(android.R.drawable.ic_media_play);
-        updateUiTime( 0 );
+        updateUiTime( musicSrv.getCurrentPosition() );
     }
 
     private void updateUiTime( long time ) {

@@ -1,8 +1,10 @@
 package slimsimapps.troff;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.IBinder;
@@ -20,6 +22,9 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import slimsimapps.troff.Models.Marker;
@@ -36,7 +41,7 @@ public class MusicService extends Service implements
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
-    public enum PlayStatus {
+    enum PlayStatus {
         PLAYING,
         PAUSED
     }
@@ -54,6 +59,9 @@ public class MusicService extends Service implements
     private List<Marker> currentMarkers;
     final private DB db = new DB(MusicService.this);
     private musicServiceListener musicServiceListener;
+
+    private Marker startMarker;
+    private Marker endMarker;
 
 
     public void setMusicServiceListener(musicServiceListener musicServiceListener) {
@@ -75,10 +83,13 @@ public class MusicService extends Service implements
     }
 
     private void completeSong() {
-        musicServiceListener.songCompleted();
-        player.seekTo( 0 );
-        player.pause();
-        schedule.shutdownNow();
+        int startTime = 0;
+	    if( startMarker != null ) {
+		    startTime = (int) startMarker.getTime();
+	    }
+	    player.seekTo( startTime );
+	    pause();
+	    musicServiceListener.songCompleted();
     }
 
     public void onCreate() {
@@ -108,11 +119,16 @@ public class MusicService extends Service implements
 
         int delay = 0;
         int period = 10;
+		final MusicService that = this;
         schedule = Executors.newScheduledThreadPool(1);
         schedule.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                musicServiceListener.getCurrentTime( getCurrentPosition() );
+				if( endMarker != null && getCurrentPosition() >= endMarker.getTime() ) {
+					that.completeSong();
+				} else {
+					musicServiceListener.getCurrentTime( getCurrentPosition() );
+				}
             }
         }, delay, period, TimeUnit.MILLISECONDS);
 
@@ -133,6 +149,16 @@ public class MusicService extends Service implements
     public void seekTo(int time) {
         player.seekTo( time );
     }
+
+    public void selectStartMarker( Marker marker ) {
+		startMarker = marker;
+		seekTo( (int) marker.getTime() );
+		musicServiceListener.getCurrentTime( (int) marker.getTime() );
+	}
+
+	public void selectEndMarker( Marker marker ) {
+		endMarker = marker;
+	}
 
     public long getCurrentPosition() {
         return player.getCurrentPosition();
@@ -222,7 +248,7 @@ public class MusicService extends Service implements
         return songList;
     }
 
-    public class MusicBinder extends Binder {
+    class MusicBinder extends Binder {
         MusicService getService() {
             return MusicService.this;
         }
@@ -250,16 +276,14 @@ public class MusicService extends Service implements
             Marker m = new Marker("Start", 0, songId);
             db.insertMarker(m);
             currentMarkers.add(m);
-/*
-            m = new Marker("Halfway", mp.getDuration() / 2, songId);
-            db.insertMarker(m);
-            currentMarkers.add(m);
-*/
 
             m = new Marker("End", mp.getDuration(), songId);
             db.insertMarker(m);
             currentMarkers.add(m);
         }
+
+        startMarker = currentMarkers.get(0);
+	    endMarker = currentMarkers.get( currentMarkers.size() -1 );
 
         musicServiceListener.notifyEndTime(mp.getDuration());
     }
@@ -302,7 +326,7 @@ public class MusicService extends Service implements
         return song;
     }
 
-    public interface musicServiceListener {
+    interface musicServiceListener {
         void notifyEndTime(long endTime);
         void getCurrentTime(long currentTime);
         void songCompleted();
