@@ -12,7 +12,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -29,7 +28,6 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.os.IBinder;
@@ -238,7 +236,9 @@ public class MainActivity extends AppCompatActivity
         final LinearLayout parent =(LinearLayout) view.getParent();
         final Marker m = (Marker) parent.getTag();
 
-        View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
+		ViewGroup root = (ViewGroup) findViewById(R.id.marker_include);
+		View editMarker = getLayoutInflater().inflate(
+				R.layout.edit_marker, root, false);
         editMarker.findViewById( R.id.edit_marker_time_row ).setVisibility( View.GONE ); // todo: remove
         ((TextView) editMarker.findViewById(R.id.marker_title)).setText( m.getName() );
 //        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( m.getTime() ) ); // or DisplayTime?
@@ -306,8 +306,9 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         final long time = musicSrv.getCurrentPosition();
-        //TODO; how do I get away with the 2 warnings here?
-        final View editMarker = getLayoutInflater().inflate(R.layout.edit_marker, null, false);
+		ViewGroup root = (ViewGroup) findViewById(R.id.marker_include);
+		final View editMarker = getLayoutInflater().inflate(
+				R.layout.edit_marker, root, false);
         ((EditText) editMarker.findViewById(R.id.marker_time)).setText( G.getDetailedDisplayTime(time) );
         editMarker.findViewById(R.id.marker_title).requestFocus();
         G.showKeyboard();
@@ -388,7 +389,10 @@ public class MainActivity extends AppCompatActivity
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+	public void onRequestPermissionsResult(
+			int requestCode,
+			@NonNull String permissions[],
+			@NonNull int[] grantResults) {
 		switch (requestCode) {
 			case READ_EXTERNAL_STORAGE_INT: {
 				// If request is cancelled, the result arrays are empty.

@@ -1,10 +1,8 @@
 package slimsimapps.troff;
 
-import android.Manifest;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.IBinder;
@@ -22,9 +20,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import slimsimapps.troff.Models.Marker;
