@@ -334,7 +334,8 @@ public class MainActivity extends AppCompatActivity
                         }
                         if( newTime == -1 ) {
                             Toast.makeText(getContext(),
-                                    R.string.instr_correkt_marker_time, Toast.LENGTH_SHORT).show();
+									R.string.instr_correct_marker_time,
+									Toast.LENGTH_SHORT).show();
                             return;
                         }
 
@@ -376,15 +377,19 @@ public class MainActivity extends AppCompatActivity
         return this;
     }
 
-	public boolean haveExternalPermission() {
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-				== PackageManager.PERMISSION_GRANTED) {
-			return true;
+	private void checkAndInitiateMusicService() {
+		if( ContextCompat.checkSelfPermission(
+				this, Manifest.permission.READ_EXTERNAL_STORAGE)
+				== PackageManager.PERMISSION_GRANTED ) {
+			initiateMusicService();
 		} else {
-			ActivityCompat.requestPermissions(this,
-					new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-					READ_EXTERNAL_STORAGE_INT);
-			return false;
+			ActivityCompat.requestPermissions(
+					this,
+					new String[]{
+							Manifest.permission.READ_EXTERNAL_STORAGE
+					},
+					READ_EXTERNAL_STORAGE_INT
+			);
 		}
 	}
 
@@ -400,13 +405,35 @@ public class MainActivity extends AppCompatActivity
 						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					initiateMusicService();
 				} else {
-					new AlertDialog.Builder(getContext())
-							.setTitle("Extornal storage krävs")
-							.setMessage("för att kunna köra Troff :) ")
-							.show();
+					handleExternalStorageNotGranted();
 				}
 			}
 		}
+	}
+
+	private void handleExternalStorageNotGranted(){
+		new AlertDialog.Builder( getContext() )
+				.setTitle( R.string.instr_ext_stor_head )
+				.setMessage( R.string.instr_ext_stor_body )
+				//todo: wierd bug when pressing this button
+				//(this dialog is shown behind the permission request)
+				.setPositiveButton( android.R.string.ok,
+						new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog,
+										int which) {
+						checkAndInitiateMusicService();
+					}
+				})
+				.setOnDismissListener(
+						new AlertDialog.OnDismissListener() {
+							@Override
+							public void onDismiss(
+									DialogInterface dialogInterface) {
+								checkAndInitiateMusicService();
+							}
+						}
+				)
+				.show();
 	}
 
 	//connect to the service
@@ -417,9 +444,7 @@ public class MainActivity extends AppCompatActivity
             MusicBinder binder = (MusicBinder)service;
             //get service
             musicSrv = binder.getService();
-			if( haveExternalPermission() ) {
-				initiateMusicService();
-			}
+			checkAndInitiateMusicService();
         }
 
         @Override

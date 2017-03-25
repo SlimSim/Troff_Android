@@ -33,6 +33,18 @@
     <string name="delete">Delete</string>
     <string name="about_to_delete">You are about to delete this marker</string>
     <string name="instr_name_marker">You must give the marker a name</string>
-    <string name="instr_correkt_marker_time">you must give the marker a correct time mm:ss.mil</string>
+	<string name="instr_correct_marker_time">
+		you must give the marker a correct time: mm:ss.mil
+	</string>
+	<string name="instr_ext_stor_head">
+		Media access is required
+	</string>
+	<string name="instr_ext_stor_body">
+		Troff is a music player and will not function without
+		"media access"\n\n
+		You can set this in\n
+		Settings / app / Troff / Permissions\n
+		Simply turn on "Storage".
+	</string>
     <string name="instr_no_fewer_than_2_markers">You can not have fewer than 2 markers per song.</string>
 </resources>
