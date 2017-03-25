@@ -22,10 +22,10 @@
         android:id="@+id/marker_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingRight="5dip"
-        android:paddingLeft="0dip"
+		android:paddingEnd="3dip"
+		android:paddingRight="3dip"
         android:paddingStart="0dip"
-        android:paddingEnd="5dip"
+		android:paddingLeft="0dip"
         android:textColor="@color/textColor"
         android:textSize="18sp" />
 
@@ -36,13 +36,14 @@
         android:textColor="@color/textColor"
         android:paddingEnd="@dimen/fab_margin"
         android:paddingRight="@dimen/fab_margin"
-        android:paddingStart="0dp"
-        android:paddingLeft="0dp"
+		android:paddingStart="3dp"
+		android:paddingLeft="3dp"
         android:textSize="20sp"
         android:textStyle="bold"
         />
 
     <ImageView
+		android:id="@+id/marker_stop"
         android:contentDescription="@string/end_song_here"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

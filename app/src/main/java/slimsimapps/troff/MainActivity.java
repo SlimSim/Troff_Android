@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -28,6 +29,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.os.IBinder;
@@ -466,8 +468,33 @@ public class MainActivity extends AppCompatActivity
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						Log.v(TAG, "songCompleted -> resetSongUi ");
 						resetSongUI();
+					}
+				});
+			}
+
+			@Override
+			public void selectStartMarkerIndex(
+					final int markerIndex ) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						selectMarkerUi(((LinearLayout)
+								findViewById( R.id.marker_list )
+						).getChildAt( markerIndex ));
+					}
+				});
+			}
+
+			@Override
+			public void selectStopMarkerIndex(
+					final int stopMarkerIndex ) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						selectStopMarkerUi(((LinearLayout)
+								findViewById( R.id.marker_list )
+						).getChildAt( stopMarkerIndex ));
 					}
 				});
 			}
@@ -530,6 +557,36 @@ public class MainActivity extends AppCompatActivity
         Marker marker = (Marker) ((View) view.getParent()).getTag();
         musicSrv.selectEndMarker( marker );
     }
+
+	public void selectMarkerUi( View view ) {
+		View markerList = findViewById(R.id.marker_list);
+		int size = ((ViewGroup) markerList).getChildCount();
+		for(int i = 0; i < size; i++ ) {
+			((ViewGroup) markerList).getChildAt(i)
+					.findViewById( R.id.marker_title)
+					.setBackgroundColor( Color.TRANSPARENT );
+		}
+
+		view.findViewById(R.id.marker_title)
+				.setBackgroundColor( ContextCompat.getColor(
+						getContext(), R.color.colorAccent
+				));
+	}
+
+	public void selectStopMarkerUi( View view ) {
+		View markerList = findViewById(R.id.marker_list);
+		int size = ((ViewGroup) markerList).getChildCount();
+		for(int i = 0; i < size; i++ ) {
+			((ViewGroup) markerList).getChildAt(i)
+					.findViewById( R.id.marker_stop)
+					.setBackgroundColor( Color.TRANSPARENT );
+		}
+
+		view.findViewById(R.id.marker_stop)
+				.setBackgroundColor( ContextCompat.getColor(
+						getContext(), R.color.colorAccent
+				) );
+	}
 
 	private void resetSongUI() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);

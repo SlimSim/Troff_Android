@@ -154,10 +154,19 @@ public class MusicService extends Service implements
 		startMarker = marker;
 		seekTo( (int) marker.getTime() );
 		musicServiceListener.getCurrentTime( (int) marker.getTime() );
+		int index = getMarkerIndex( marker );
+		musicServiceListener.selectStartMarkerIndex( index );
+	}
+
+	private int getMarkerIndex( Marker m ) {
+		Collections.sort(currentMarkers);
+		return currentMarkers.indexOf( m );
 	}
 
 	public void selectEndMarker( Marker marker ) {
 		endMarker = marker;
+		int index = getMarkerIndex( marker );
+		musicServiceListener.selectStopMarkerIndex( index );
 	}
 
     public long getCurrentPosition() {
@@ -282,10 +291,13 @@ public class MusicService extends Service implements
             currentMarkers.add(m);
         }
 
-        startMarker = currentMarkers.get(0);
-	    endMarker = currentMarkers.get( currentMarkers.size() -1 );
+		musicServiceListener.notifyEndTime( mp.getDuration() );
 
-        musicServiceListener.notifyEndTime(mp.getDuration());
+		selectStartMarker( currentMarkers.get(0) );
+		selectEndMarker( currentMarkers.get(
+				currentMarkers.size() - 1 )
+		);
+
     }
 
     public void setSong(int songIndex) {
@@ -330,6 +342,8 @@ public class MusicService extends Service implements
         void notifyEndTime(long endTime);
         void getCurrentTime(long currentTime);
         void songCompleted();
+		void selectStartMarkerIndex(int i);
+		void selectStopMarkerIndex(int i);
     }
 
 }

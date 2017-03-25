@@ -1,9 +1,11 @@
 package slimsimapps.troff.Models;
 
+import android.support.annotation.NonNull;
+
 /**
  * Created on 2016-10-21, by Slim Sim.
  */
-public class Marker {
+public class Marker implements Comparable<Marker>{
 
     private int id, songId;
     private String name, info, color;
@@ -89,4 +91,9 @@ public class Marker {
     public String toString() {
         return "{" + name +", id="+id+", songId="+songId+", time="+time + "}";
     }
+
+	@Override
+	public int compareTo(@NonNull Marker marker) {
+		return (int) ( this.getTime() - marker.getTime() );
+	}
 }
