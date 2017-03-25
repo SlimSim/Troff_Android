@@ -1,11 +1,15 @@
 package slimsimapps.troff.Models;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 /**
  * Created on 2016-10-21, by Slim Sim.
  */
 public class Marker implements Comparable<Marker>{
+
+	@SuppressWarnings("unused")
+	private static final String TAG = "Marker";
 
     private int id, songId;
     private String name, info, color;
@@ -95,5 +99,26 @@ public class Marker implements Comparable<Marker>{
 	@Override
 	public int compareTo(@NonNull Marker marker) {
 		return (int) ( this.getTime() - marker.getTime() );
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Marker other = (Marker) obj;
+		if (id != other.id)
+			return false;
+		if (songId != other.songId) {
+            Log.w(TAG, "equals: markerId is same, but songId is not!" +
+					"\nthis  = " + this +
+					"\nother = " + other
+			);
+			return false;
+		}
+		return true;
 	}
 }
