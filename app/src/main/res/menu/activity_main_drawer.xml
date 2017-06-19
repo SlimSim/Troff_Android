@@ -10,6 +10,10 @@
             android:id="@+id/nav_markers"
             android:icon="@drawable/ic_marker_list"
             android:title="@string/markers"/>
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_share"
+            android:title="@string/action_settings"/>
 <!--
         <item
             android:id="@+id/nav_camera"

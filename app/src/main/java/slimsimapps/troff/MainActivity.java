@@ -5,13 +5,17 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -26,6 +30,7 @@ import java.util.ArrayList;
 
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -44,7 +49,8 @@ import slimsimapps.troff.Models.Song;
 import slimsimapps.troff.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+		implements NavigationView.OnNavigationItemSelectedListener,
+		SettingsFragment.OnFragmentInteractionListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = "MainActivity";
@@ -167,6 +173,9 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_markers:
                 showMarkerTimeLine();
                 break;
+			case R.id.nav_settings:
+				showSettings();
+				break;
         }
         /*
         if (id == R.id.nav_camera) {
@@ -189,6 +198,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+	private void showSettings() {
+		findViewById(R.id.fragSettingsContainer).setVisibility(View
+				.VISIBLE);
+		findViewById(R.id.song_list).setVisibility(View.GONE);
+		findViewById(R.id.marker_include).setVisibility(View.GONE);
+	}
+
     private void showMarkerTimeLine() {
         if( !musicSrv.isSongSelected() ) {
             Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
@@ -200,8 +216,9 @@ public class MainActivity extends AppCompatActivity
                     }, 0);
             return;
         }
-        findViewById(R.id.song_list).setVisibility(View.GONE);
-        findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
+		findViewById(R.id.fragSettingsContainer).setVisibility(View.GONE);
+		findViewById(R.id.song_list).setVisibility(View.GONE);
+		findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
 
         recalculateTimeLineSoon();
     }
@@ -224,8 +241,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showSongList() {
-        findViewById( R.id.song_list ).setVisibility( View.VISIBLE );
-        findViewById( R.id.marker_include ).setVisibility( View.GONE );
+		findViewById( R.id.song_list ).setVisibility( View.VISIBLE );
+		findViewById( R.id.marker_include ).setVisibility( View.GONE );
+		findViewById(R.id.fragSettingsContainer).setVisibility(View
+				.GONE );
     }
 
 // --------------------------- below here is the own added methods :) ------------------------------
@@ -391,6 +410,16 @@ public class MainActivity extends AppCompatActivity
 					READ_EXTERNAL_STORAGE_INT
 			);
 		}
+
+		Log.v(TAG, "adding settingsFragment, musicSrv = " + musicSrv);
+		SettingsFragment settingsFragment =
+				SettingsFragment.newInstance(musicSrv);
+		FragmentManager fm = getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = fm.beginTransaction();
+		fragmentTransaction.add(
+				R.id.fragSettingsContainer, settingsFragment);
+		fragmentTransaction.commit();
+
 	}
 
 	@Override
@@ -527,6 +556,12 @@ public class MainActivity extends AppCompatActivity
 					}
 				});
 			}
+
+			@Override
+			public void nrLoopsLeft(int nrLoopsLeft) {
+				((TextView) findViewById(R.id.displayTimesLeft))
+						.setText("" + nrLoopsLeft);
+			}
 		});
 	}
 
@@ -628,4 +663,9 @@ public class MainActivity extends AppCompatActivity
         timeBar.setProgress( (int) time );
         ((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
     }
+
+	@Override
+	public void onFragmentInteraction(Uri uri) {
+		Log.v(TAG, "onFragmentInteraction -> uri = " + uri);
+	}
 }

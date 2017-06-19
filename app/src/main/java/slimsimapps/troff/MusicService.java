@@ -36,7 +36,17 @@ public class MusicService extends Service implements
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
-    enum PlayStatus {
+	private int nrLoops;
+
+	private int nrLoopsLeft;
+	private int waitBetween;
+
+	public void setWaitBetween(int waitBetween) {
+		this.waitBetween = waitBetween;
+	}
+
+
+	enum PlayStatus {
         PLAYING,
         PAUSED
     }
@@ -78,13 +88,26 @@ public class MusicService extends Service implements
     }
 
     private void completeSong() {
+		Log.v(TAG, "completeSong ->");
         int startTime = 0;
 	    if( startMarker != null ) {
 		    startTime = (int) startMarker.getTime();
 	    }
 	    player.seekTo( startTime );
 	    pause();
-	    musicServiceListener.songCompleted();
+
+		if( nrLoopsLeft == 0 ) {
+			musicServiceListener.songCompleted();
+		} else {
+			Log.v(TAG, "setting waiter :)");
+			Executors.newScheduledThreadPool(1).schedule(new Runnable() {
+				@Override
+				public void run() {
+					Log.v(TAG, "to play ->");
+					play();
+				}
+			}, waitBetween, TimeUnit.SECONDS);
+		}
     }
 
     public void onCreate() {
@@ -111,6 +134,8 @@ public class MusicService extends Service implements
 
     private PlayStatus play() {
         player.start();
+	    nrLoopsLeft--;
+	    musicServiceListener.nrLoopsLeft(nrLoopsLeft);
 
         int delay = 0;
         int period = 10;
@@ -134,9 +159,12 @@ public class MusicService extends Service implements
     }
 
     public PlayStatus playOrPause() {
+	    Log.v( TAG, "nrLoops = " + nrLoops );
         if( player.isPlaying() ) {
             return this.pause();
         } else {
+	        nrLoopsLeft = nrLoops;
+	        musicServiceListener.nrLoopsLeft(nrLoopsLeft);
             return play();
         }
     }
@@ -333,12 +361,18 @@ public class MusicService extends Service implements
         return song;
     }
 
-    interface musicServiceListener {
+	public void setLoop( int loop ) {
+		Log.v(TAG, "setLoop -> loop = " + loop);
+		this.nrLoops = loop;
+	}
+
+	interface musicServiceListener {
         void notifyEndTime(long endTime);
         void getCurrentTime(long currentTime);
         void songCompleted();
 		void selectStartMarkerIndex(int i);
 		void selectStopMarkerIndex(int i);
-    }
+		void nrLoopsLeft(int nrLoopsLeft);
+	}
 
 }

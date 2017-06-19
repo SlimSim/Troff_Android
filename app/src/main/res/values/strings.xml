@@ -47,4 +47,9 @@
 		Simply turn on "Storage".
 	</string>
     <string name="instr_no_fewer_than_2_markers">You can not have fewer than 2 markers per song.</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+	<string name="hello_blank_fragment">
+		This is the Settings fragment
+	</string>
 </resources>

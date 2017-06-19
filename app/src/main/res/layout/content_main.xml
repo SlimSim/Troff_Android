@@ -3,12 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+	android:id="@+id/contentPanel"
     android:paddingTop="?attr/actionBarSize"
     android:orientation="vertical"
     tools:context="slimsimapps.troff.MainActivity" >
 
-
+	<FrameLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:id="@+id/fragSettingsContainer">
+	</FrameLayout>
+<!--
+	<fragment
+		android:name="slimsimapps.troff.SettingsFragment"
+		android:id="@+id/settingsFragment"
+		android:layout_height="0dp"
+		android:layout_width="match_parent"
+		android:layout_weight="1" />
+-->
     <ListView
+	    android:visibility="gone"
         android:id="@+id/song_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
