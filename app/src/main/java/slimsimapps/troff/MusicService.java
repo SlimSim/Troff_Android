@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.content.ContentUris;
@@ -41,6 +42,8 @@ public class MusicService extends Service implements
 	private int nrLoopsLeft;
 	private int waitBetween;
 
+	private PlayStatus currentStatus;
+
 	public void setWaitBetween(int waitBetween) {
 		this.waitBetween = waitBetween;
 	}
@@ -48,13 +51,15 @@ public class MusicService extends Service implements
 
 	enum PlayStatus {
         PLAYING,
+		COUNTING,
         PAUSED
     }
 
     @SuppressWarnings("unused")
     private static final String TAG = "MusicService";
 
-    private ScheduledExecutorService schedule;
+    private ScheduledExecutorService timeUpdateSchedule;
+	private ScheduledFuture waitBetweenSchedule;
 
     private MediaPlayer player;
     private final IBinder musicBind = new MusicBinder();
@@ -88,8 +93,7 @@ public class MusicService extends Service implements
     }
 
     private void completeSong() {
-		Log.v(TAG, "completeSong ->");
-        int startTime = 0;
+	    int startTime = 0;
 	    if( startMarker != null ) {
 		    startTime = (int) startMarker.getTime();
 	    }
@@ -99,11 +103,11 @@ public class MusicService extends Service implements
 		if( nrLoopsLeft == 0 ) {
 			musicServiceListener.songCompleted();
 		} else {
-			Log.v(TAG, "setting waiter :)");
-			Executors.newScheduledThreadPool(1).schedule(new Runnable() {
+			currentStatus = PlayStatus.COUNTING;
+			waitBetweenSchedule = Executors
+					.newScheduledThreadPool(1).schedule(new Runnable() {
 				@Override
 				public void run() {
-					Log.v(TAG, "to play ->");
 					play();
 				}
 			}, waitBetween, TimeUnit.SECONDS);
@@ -128,8 +132,12 @@ public class MusicService extends Service implements
 
     private PlayStatus pause() {
         player.pause();
-        schedule.shutdownNow();
-        return PlayStatus.PAUSED;
+		currentStatus = PlayStatus.PAUSED;
+    	timeUpdateSchedule.shutdownNow();
+		if( waitBetweenSchedule != null ) {
+			waitBetweenSchedule.cancel( true );
+		}
+		return PlayStatus.PAUSED;
     }
 
     private PlayStatus play() {
@@ -140,8 +148,8 @@ public class MusicService extends Service implements
         int delay = 0;
         int period = 10;
 		final MusicService that = this;
-        schedule = Executors.newScheduledThreadPool(1);
-        schedule.scheduleWithFixedDelay(new Runnable() {
+        timeUpdateSchedule = Executors.newScheduledThreadPool(1);
+        timeUpdateSchedule.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
 				if( endMarker != null && getCurrentPosition() >= endMarker.getTime() ) {
@@ -155,13 +163,15 @@ public class MusicService extends Service implements
         Song song = getSong();
         song.incrementNrPlayed();
         db.updateSong(song);
+	    currentStatus = PlayStatus.PLAYING;
         return PlayStatus.PLAYING;
     }
 
     public PlayStatus playOrPause() {
-	    Log.v( TAG, "nrLoops = " + nrLoops );
-        if( player.isPlaying() ) {
+        if( currentStatus == PlayStatus.PLAYING ) {
             return this.pause();
+        } else if( currentStatus == PlayStatus.COUNTING ) {
+	        return this.pause();
         } else {
 	        nrLoopsLeft = nrLoops;
 	        musicServiceListener.nrLoopsLeft(nrLoopsLeft);
@@ -216,12 +226,19 @@ public class MusicService extends Service implements
         return m;
     }
 
-    public void removeMarker(int markerId) {
-        db.removeMarker( getCurrSongId(), markerId );
-        currentMarkers = db.getAllMarkers( getCurrSongId() );
-    }
+	public void removeMarker(int markerId) {
+		db.removeMarker( getCurrSongId(), markerId );
+		currentMarkers = db.getAllMarkers( getCurrSongId() );
+	}
 
-    @SuppressWarnings("unused")
+	public void updateMarker( Marker marker ) {
+		Log.v(TAG, "updateMarker -> " );
+		db.updateMarker( marker );
+		currentMarkers = db.getAllMarkers( getCurrSongId() );
+		Log.v(TAG, "updateMarker <- " );
+	}
+
+	@SuppressWarnings("unused")
     public void printCurrSong() {
         Log.d(TAG, "printCurrSong: songs   = " + songs.get( selectedSongNr ) );
         Log.d(TAG, "printCurrSong: fileId  = " + getCurrSongFileId() );
@@ -329,11 +346,12 @@ public class MusicService extends Service implements
         }
         selectedSongNr = songIndex;
         player.reset();
-        //todo: ev fix better way to handle the schedule
-        if( schedule != null && !schedule.isTerminated() ) {
-            schedule.shutdownNow();
+        //todo: ev fix better way to handle the timeUpdateSchedule
+        if( timeUpdateSchedule != null && !timeUpdateSchedule.isTerminated() ) {
+            timeUpdateSchedule.shutdownNow();
         }
         Song song = getSong();
+	    musicServiceListener.onLoadedSong( song );
         Uri trackUri = ContentUris.withAppendedId(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 song.getFileId() );
@@ -373,6 +391,7 @@ public class MusicService extends Service implements
 		void selectStartMarkerIndex(int i);
 		void selectStopMarkerIndex(int i);
 		void nrLoopsLeft(int nrLoopsLeft);
+		void onLoadedSong(Song song);
 	}
 
 }

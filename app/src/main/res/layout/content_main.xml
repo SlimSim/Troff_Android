@@ -9,6 +9,7 @@
     tools:context="slimsimapps.troff.MainActivity" >
 
 	<FrameLayout
+		android:visibility="gone"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:id="@+id/fragSettingsContainer">
@@ -22,7 +23,6 @@
 		android:layout_weight="1" />
 -->
     <ListView
-	    android:visibility="gone"
         android:id="@+id/song_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

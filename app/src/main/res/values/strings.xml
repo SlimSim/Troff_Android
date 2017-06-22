@@ -48,8 +48,16 @@
 	</string>
     <string name="instr_no_fewer_than_2_markers">You can not have fewer than 2 markers per song.</string>
 
-<!-- TODO: Remove or change this placeholder text -->
-	<string name="hello_blank_fragment">
-		This is the Settings fragment
-	</string>
+	<string name="Settings">Settings</string>
+	<string name="_1">1</string>
+	<string name="_2">2</string>
+	<string name="_3">3</string>
+	<string name="_4">4</string>
+	<string name="_5">5</string>
+	<string name="_6">6</string>
+	<string name="_7">7</string>
+	<string name="_8">8</string>
+	<string name="_9">9</string>
+	<string name="number_of_loops">Number of loops:</string>
+	<string name="wait_between">Wait between</string>
 </resources>

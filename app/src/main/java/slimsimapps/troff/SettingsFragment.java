@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.sax.RootElement;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -15,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+
+import slimsimapps.troff.Models.Song;
 
 
 /**
@@ -28,8 +31,22 @@ import android.widget.LinearLayout;
  */
 public class SettingsFragment extends Fragment {
 
+	/**
+	 * TODO: det är bra att skicka information till fragmentet när
+	 * man skapar upp det (och behöver man byta information, tex när
+	 * låten ändras, så tar man bara bort det gamla fragmentet och
+	 * ersätter med det nya)
+	 * och för att skicka tillbaka information så använd
+	 * OnFragmentInteractionListener längst ner.
+	 * alltså INTE "musicSrv.setWaitBetween( wait );" och liknande :(
+	 */
+
 	@SuppressWarnings("unused")
 	private static final String TAG = "SettingsFragment";
+
+	private View rootView; // TODO: ask me, ask Rasmus: är detta ok
+	// best practice? att använda en rootView för att kunna använda
+	// findViewById() ?
 
 	// TODO: Rename parameter arguments, choose names that match
 	// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -105,6 +122,8 @@ public class SettingsFragment extends Fragment {
 		View view = inflater.inflate(R.layout.fragment_settings,
 				container, false);
 
+		rootView = view;
+
 //		LinearLayout loopParent =
 		((EditText) view.findViewById(
 				R.id.settingsWaitBetween)).addTextChangedListener(
@@ -129,15 +148,17 @@ public class SettingsFragment extends Fragment {
 		LinearLayout loopParent = (LinearLayout) view.findViewById(
 				R.id.settingsLoopParent);
 		for( int i = 0; i < loopParent.getChildCount(); i++ ) {
-			loopParent.getChildAt(i).setOnClickListener(
-					new View.OnClickListener() {
-						@Override
-						public void onClick(View view) {
-							onLoopClick(view);
-
+			LinearLayout ll = (LinearLayout)loopParent.getChildAt(i);
+			for( int j = 0; j < ll.getChildCount(); j++ ) {
+				ll.getChildAt(j).setOnClickListener(
+						new View.OnClickListener() {
+							@Override
+							public void onClick(View view) {
+								onLoopClick(view);
+							}
 						}
-					}
-			);
+				);
+			}
 		}
 
 		return view;
@@ -155,11 +176,14 @@ public class SettingsFragment extends Fragment {
 		Log.v(TAG, "onLoopClick ->");
 		int nrLoops = Integer.parseInt((String) view.getTag());
 
-		LinearLayout parent = (LinearLayout) view.getParent();
+		LinearLayout parent = (LinearLayout) view.getParent().getParent();
 		for( int i = 0; i < parent.getChildCount(); i++ ) {
-			parent.getChildAt( i ).setBackgroundColor(
-					Color.TRANSPARENT
-			);
+			LinearLayout ll = (LinearLayout) parent.getChildAt( i );
+			for( int j = 0; j < ll.getChildCount(); j++ ) {
+				ll.getChildAt(j).setBackgroundColor(
+						Color.TRANSPARENT
+				);
+			}
 		}
 		view.setBackgroundColor( ContextCompat.getColor(
 				getContext(),
@@ -186,6 +210,29 @@ public class SettingsFragment extends Fragment {
 	public void onDetach() {
 		super.onDetach();
 		mListener = null;
+	}
+
+	/**
+	 * This method is run when a song is picked,
+	 * it should load all the settings from the DB and apply them.
+	 * @param song
+	 */
+	public void onLoadedSong( Song song ) {
+		// todo: fix so that all the settings are saved in the DB and
+		// applyed when a song is selected.
+		Log.v( TAG, "onLoadedSong ->" );
+
+		// set the loopsetting to the "saved" value:
+		onLoopClick( rootView.findViewById( R.id.loop1 ) );
+
+		// set the wait between to the "saved" value:
+		((EditText) rootView.findViewById(
+				R.id.settingsWaitBetween)).setText( "1" );
+
+
+		// load the wait between value to the musicService:
+		onWaitChange(((EditText) rootView.findViewById(
+				R.id.settingsWaitBetween)).getText());
 	}
 
 	/**
