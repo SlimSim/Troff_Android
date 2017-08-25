@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -50,7 +48,7 @@ import slimsimapps.troff.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener,
-		SettingsFragment.OnFragmentInteractionListener {
+		SettingsFragment.SettingsListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = "MainActivity";
@@ -60,8 +58,6 @@ public class MainActivity extends AppCompatActivity
     private MusicService musicSrv;
     private Intent playIntent;
     private G G;
-	private SettingsFragment settingsFragment;
-//    private boolean musicBound=false;
 
     ViewTreeObserver.OnGlobalLayoutListener onRotationListener;
 
@@ -203,6 +199,8 @@ public class MainActivity extends AppCompatActivity
 		if( !checkSongSelected() ) {
 			return;
 		}
+		commitSettingsFragment();
+
 		findViewById(R.id.fragSettingsContainer).setVisibility(View
 				.VISIBLE);
 		findViewById(R.id.song_list).setVisibility(View.GONE);
@@ -210,9 +208,10 @@ public class MainActivity extends AppCompatActivity
 	}
 
     private void showMarkerTimeLine() {
-        if( !checkSongSelected() ) {
-            return;
-        }
+		if( !checkSongSelected() ) {
+			return;
+		}
+		removeIfExistsSettingsFragment();
 		findViewById(R.id.fragSettingsContainer).setVisibility(View.GONE);
 		findViewById(R.id.song_list).setVisibility(View.GONE);
 		findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
@@ -252,6 +251,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showSongList() {
+		removeIfExistsSettingsFragment();
 		findViewById( R.id.song_list ).setVisibility( View.VISIBLE );
 		findViewById( R.id.marker_include ).setVisibility( View.GONE );
 		findViewById(R.id.fragSettingsContainer).setVisibility(View
@@ -320,10 +320,7 @@ public class MainActivity extends AppCompatActivity
                             return;
                         }
 
-
-                        Log.v( TAG, "onClick ok -> name = " + name );
 	                    editedMarker.setName( name );
-
 
                         musicSrv.updateMarker( editedMarker );
 
@@ -432,12 +429,47 @@ public class MainActivity extends AppCompatActivity
 			);
 		}
 
-		Log.v(TAG, "adding settingsFragment, musicSrv = " + musicSrv);
-		settingsFragment = SettingsFragment.newInstance(musicSrv);
+	}
+
+	private void removeIfExistsSettingsFragment() {
+
+		FragmentManager fm = getSupportFragmentManager();
+		// todo: Fix so that the song-list, markers also are fragments
+		// and then use popBackStack and addToBackStack
+		// to make back-button work :) FIX-PAR-1
+		// then you can do pooBackStack, then you maby won't have
+		// to do getSupportFragManager,beginTrans,remove,commit mm...
+		// maby :)
+		// fm.popBackStack();
+
+		SettingsFragment settingsFragment = (SettingsFragment)
+				fm.findFragmentById( R.id.fragSettingsContainer );
+
+
+		if( settingsFragment != null ) {
+			getSupportFragmentManager().beginTransaction()
+					.remove( settingsFragment ).commit();
+		}
+	}
+
+	private void commitSettingsFragment() {
+		removeIfExistsSettingsFragment();
+		Song s = musicSrv.getSong();
+
+		SettingsFragment settingsFragment = SettingsFragment
+				.newInstance(
+						s.getStartBefore(),
+						s.getStopAfter(),
+						s.getPauseBefore(),
+						s.getWaitBetween(),
+						s.getLoop());
+
 		FragmentManager fm = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fm.beginTransaction();
 		fragmentTransaction.add(
 				R.id.fragSettingsContainer, settingsFragment);
+		// TODO: implement addToBackStack, FIX-PAR-1
+		// fragmentTransaction.addToBackStack( "settingsFragment" );
 		fragmentTransaction.commit();
 
 	}
@@ -498,7 +530,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-	        musicSrv = null;
+			musicSrv = null;
         }
     };
 
@@ -522,7 +554,7 @@ public class MainActivity extends AppCompatActivity
 			}
 		});
 
-		musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
+		musicSrv.setCallOut(new MusicService.MusicServiceListener() {
 			@Override
 			public void notifyEndTime(final long endTime) {
 				runOnUiThread(new Runnable() {
@@ -595,9 +627,18 @@ public class MainActivity extends AppCompatActivity
 
 			@Override
 			public void onLoadedSong(final Song song ) {
-				settingsFragment.onLoadedSong( song );
+				String title = song.getTitle();
+				String artist = song.getArtist();
+
+				ActionBar ab = getSupportActionBar();
+				if(ab != null) ab.setTitle( title + ", " + artist );
 			}
 		});
+
+		// must be after the listeners b/c setSong uses
+		// musicServicListener.onLoadedSong()
+		setSong( musicSrv.getSelectedSongNr() );
+
 	}
 
 	@Override
@@ -625,28 +666,35 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void setSong( int songIndex ) {
+		if( songIndex == -1 ) {
+			return;
+		}
+		musicSrv.setSong( songIndex );
+
+		resetSongUI();
+
+		((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
+		showMarkerTimeLine();
+
+		LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+
+		markerList.removeAllViews();
+	}
+
 	/**
 	 * is run when a song is selected.
 	 * @param view - the view of the song selected
 	 */
 	public void songPicked(View view) {
-        musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+		int songIndex = Integer.parseInt(view.getTag().toString());
 
         resetSongListBackgroundColor();
-        view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
-        resetSongUI();
+		view.setBackgroundColor( ContextCompat.getColor(
+				getContext(), R.color.colorAccent
+		) );
 
-        String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
-        String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
-
-        ActionBar ab = getSupportActionBar();
-        if(ab != null) ab.setTitle( title + ", " + artist );
-
-        ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
-        showMarkerTimeLine();
-
-        markerList.removeAllViews();
+		setSong( songIndex );
         // The function notifyEndTime above will be called when the song is loaded
         // it will create the markers.
     }
@@ -703,8 +751,24 @@ public class MainActivity extends AppCompatActivity
         ((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
     }
 
-	@Override
-	public void onFragmentInteraction(Uri uri) {
-		Log.v(TAG, "onFragmentInteraction -> uri = " + uri);
-	}
+@Override
+public void onLoopChange( int nrLoops ) {
+	musicSrv.setLoop( nrLoops );
 }
+@Override
+public void onStartBeforeChange(int startBefore) {
+	musicSrv.setStartBefore( startBefore );
+}
+@Override
+public void onPauseBeforeChange(int pause) {
+	musicSrv.setPauseBefore( pause );
+}
+@Override
+public void onWaitChange( int wait) {
+	musicSrv.setWaitBetween( wait );
+}
+@Override
+public void onStopAfterChange( int stopAfter ) {
+	musicSrv.setStopAfter( stopAfter );
+}
+} // end Class

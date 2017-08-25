@@ -60,4 +60,7 @@
 	<string name="_9">9</string>
 	<string name="number_of_loops">Number of loops:</string>
 	<string name="wait_between">Wait between</string>
+	<string name="start_before">Start before</string>
+	<string name="stop_after">Stop after</string>
+	<string name="pause_before">Pause before</string>
 </resources>
