@@ -2,7 +2,6 @@ package slimsimapps.troff;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -20,7 +19,7 @@ import android.widget.LinearLayout;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link SettingsFragment.OnFragmentInteractionListener} interface
+ * {@link SettingsListener} interface
  * to handle interaction events.
  * Use the {@link SettingsFragment#newInstance} factory method to
  * create an instance of this fragment.
@@ -31,39 +30,47 @@ public class SettingsFragment extends Fragment {
 	@SuppressWarnings("unused")
 	private static final String TAG = "SettingsFragment";
 
-	// TODO: Rename parameter arguments, choose names that match
-	// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-	private static final String ARG_PARAM1 = "param1";
-	private static final String ARG_PARAM2 = "param2";
+	private static final String START_BEFORE = "startBefore";
+	private static final String STOP_AFTER = "stopAfter";
+	private static final String PAUSE_BEFORE = "pauseBefore";
+	private static final String WAIT_BETWEEN = "waitBetween";
+	private static final String NR_LOOPS = "nrLoops";
 
-	private static MusicService musicSrv;
+	private int startBefore;
+	private int stopAfter;
+	private int pauseBefore;
+	private int waitBetween;
+	private int nrLoops;
 
-	// TODO: Rename and change types of parameters
-	private String mParam1;
-	private String mParam2;
-
-	private OnFragmentInteractionListener mListener;
+	private SettingsListener callOut;
 
 	/**
 	 * Use this factory method to create a new instance of
 	 * this fragment using the provided parameters.
 	 *
-//	 * @param param1 Parameter 1.
-//	 * @param param2 Parameter 2.
+	 * @param startBefore Parameter 1.
+	 * @param stopAfter Parameter 2.
+	 * @param pauseBefore Parameter 3.
+	 * @param waitBetween Parameter 4.
+	 * @param nrLoops Parameter 5.
 	 * @return A new instance of fragment SettingsFragment.
 	 */
-	// TODO: Rename and change types and number of parameters
-	public static SettingsFragment newInstance( MusicService
-													musicService ) {
+	public static SettingsFragment newInstance(
+			int startBefore,
+			int stopAfter,
+			int pauseBefore,
+			int waitBetween,
+			int nrLoops
+	) {
 		SettingsFragment fragment = new SettingsFragment();
 		Bundle args = new Bundle();
-		String param1 = "stuff", param2 = "staff"; //should come form
-		// calling method....
-		args.putString(ARG_PARAM1, param1);
-		args.putString(ARG_PARAM2, param2);
+
+		args.putInt(START_BEFORE, startBefore);
+		args.putInt(STOP_AFTER, stopAfter);
+		args.putInt(PAUSE_BEFORE, pauseBefore);
+		args.putInt(WAIT_BETWEEN, waitBetween);
+		args.putInt(NR_LOOPS, nrLoops);
 		fragment.setArguments(args);
-		Log.v(TAG, "musicService = " + musicService);
-		musicSrv = musicService;
 		return fragment;
 	}
 	public SettingsFragment() {
@@ -74,8 +81,11 @@ public class SettingsFragment extends Fragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (getArguments() != null) {
-			mParam1 = getArguments().getString(ARG_PARAM1);
-			mParam2 = getArguments().getString(ARG_PARAM2);
+			startBefore = getArguments().getInt(START_BEFORE);
+			stopAfter = getArguments().getInt(STOP_AFTER);
+			pauseBefore = getArguments().getInt(PAUSE_BEFORE);
+			waitBetween = getArguments().getInt(WAIT_BETWEEN);
+			nrLoops = getArguments().getInt(NR_LOOPS);
 		}
 
 	}
@@ -100,92 +110,166 @@ public class SettingsFragment extends Fragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 							 Bundle savedInstanceState) {
-		// Inflate the layout for this fragment
 
 		View view = inflater.inflate(R.layout.fragment_settings,
 				container, false);
 
-//		LinearLayout loopParent =
+		((EditText) view.findViewById(R.id.settingsStartBefore))
+				.setText("" + (startBefore / 1000) );
+		((EditText) view.findViewById(R.id.settingsStopAfter))
+				.setText("" + (stopAfter / 1000) );
+		((EditText) view.findViewById(R.id.settingsPauseBefore))
+				.setText( "" + pauseBefore );
+		((EditText) view.findViewById(R.id.settingsWaitBetween))
+				.setText( "" + waitBetween );
+
+		View loopBut = view.findViewWithTag( "" + nrLoops );
+
+		if( loopBut != null ) {
+			onLoopClick( loopBut );
+		} else {
+			onLoopClick( view.findViewById( R.id.loop1 ) );
+		}
+
 		((EditText) view.findViewById(
 				R.id.settingsWaitBetween)).addTextChangedListener(
 				new TextWatcher() {
 					@Override
 					public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
 					}
 
 					@Override
 					public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
 					}
 
 					@Override
 					public void afterTextChanged(Editable editable) {
-						onWaitChange( editable );
+						int wait = getIntFromEditable( editable );
+						callOut.onWaitChange( wait );
 					}
 				}
 
 		);
+	((EditText) view.findViewById(
+			R.id.settingsPauseBefore)).addTextChangedListener(
+			new TextWatcher() {
+				@Override
+				public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable editable) {
+					int pause = getIntFromEditable( editable );
+					callOut.onPauseBeforeChange( pause );
+				}
+			}
+	);
+	((EditText) view.findViewById(
+			R.id.settingsStartBefore)).addTextChangedListener(
+			new TextWatcher() {
+				@Override
+				public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable editable) {
+					int startBefore = getIntFromEditable( editable );
+					callOut.onStartBeforeChange( startBefore * 1000 );
+				}
+			}
+	);
+	((EditText) view.findViewById(
+			R.id.settingsStopAfter)).addTextChangedListener(
+			new TextWatcher() {
+				@Override
+				public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+				}
+
+				@Override
+				public void afterTextChanged(Editable editable) {
+					int stopAfter = getIntFromEditable( editable );
+					callOut.onStopAfterChange( stopAfter * 1000 );
+				}
+			}
+	);
 		LinearLayout loopParent = (LinearLayout) view.findViewById(
 				R.id.settingsLoopParent);
 		for( int i = 0; i < loopParent.getChildCount(); i++ ) {
-			loopParent.getChildAt(i).setOnClickListener(
-					new View.OnClickListener() {
-						@Override
-						public void onClick(View view) {
-							onLoopClick(view);
-
+			LinearLayout ll = (LinearLayout)loopParent.getChildAt(i);
+			for( int j = 0; j < ll.getChildCount(); j++ ) {
+				ll.getChildAt(j).setOnClickListener(
+						new View.OnClickListener() {
+							@Override
+							public void onClick(View view) {
+								onLoopClick(view);
+							}
 						}
-					}
-			);
+				);
+			}
 		}
 
 		return view;
 	}
 
-	private void onWaitChange( Editable editable ) {
-		int wait = 0;
-		if( !editable.toString().equals("") )
-			wait = Integer.parseInt( editable.toString() );
-		Log.v(TAG, "wait = " + wait);
-		musicSrv.setWaitBetween( wait );
+	private int getIntFromEditable( Editable editable ) {
+		int returnValue;
+		try {
+			returnValue = Integer.parseInt( editable.toString() );
+		} catch( NumberFormatException nfe ) {
+			Log.w(TAG, "getIntFromEditable: NumberFormatException for \"" +
+					editable.toString() + "\"");
+			returnValue = 0;
+		}
+		return returnValue;
 	}
 
 	private void onLoopClick(View view) {
-		Log.v(TAG, "onLoopClick ->");
-		int nrLoops = Integer.parseInt((String) view.getTag());
+		nrLoops = Integer.parseInt((String) view.getTag());
 
-		LinearLayout parent = (LinearLayout) view.getParent();
+		LinearLayout parent = (LinearLayout) view.getParent().getParent();
 		for( int i = 0; i < parent.getChildCount(); i++ ) {
-			parent.getChildAt( i ).setBackgroundColor(
-					Color.TRANSPARENT
-			);
+			LinearLayout ll = (LinearLayout) parent.getChildAt( i );
+			for( int j = 0; j < ll.getChildCount(); j++ ) {
+				ll.getChildAt(j).setBackgroundColor(
+						Color.TRANSPARENT
+				);
+			}
 		}
 		view.setBackgroundColor( ContextCompat.getColor(
 				getContext(),
 				R.color.colorAccent
 		));
-		Log.v(TAG, "onLoopClick: nrLoops = " + nrLoops);
-		musicSrv.setLoop( nrLoops );
+		callOut.onLoopChange( nrLoops );
 	}
 
 
 	@Override
 	public void onAttach(Context context) {
-		Log.v(TAG, "onAttach getView = " + getView());
 		super.onAttach(context);
-		if (context instanceof OnFragmentInteractionListener) {
-			mListener = (OnFragmentInteractionListener) context;
+		if (context instanceof SettingsListener) {
+			callOut = (SettingsListener) context;
 		} else {
 			throw new RuntimeException(context.toString()
-					+ " must implement OnFragmentInteractionListener");
+					+ " must implement SettingsListener");
 		}
 	}
 
 	@Override
 	public void onDetach() {
 		super.onDetach();
-		mListener = null;
+		callOut = null;
 	}
 
 	/**
@@ -198,8 +282,11 @@ public class SettingsFragment extends Fragment {
 	 * "http://developer.android.com/training/basics/fragments/communicating.html"
 	 * >Communicating with Other Fragments</a> for more information.
 	 */
-	public interface OnFragmentInteractionListener {
-		// TODO: Update argument type and name
-		void onFragmentInteraction(Uri uri);
+	interface SettingsListener {
+		void onLoopChange( int nrLoops );
+		void onStartBeforeChange( int startBefore );
+		void onStopAfterChange( int stopAfter );
+		void onPauseBeforeChange( int pause );
+		void onWaitChange( int wait );
 	}
 }

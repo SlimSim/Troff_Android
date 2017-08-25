@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -30,7 +29,6 @@ import java.util.ArrayList;
 
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -50,7 +48,7 @@ import slimsimapps.troff.MusicService.MusicBinder;
 
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener,
-		SettingsFragment.OnFragmentInteractionListener {
+		SettingsFragment.SettingsListener {
 
     @SuppressWarnings("unused")
     private static final String TAG = "MainActivity";
@@ -60,7 +58,6 @@ public class MainActivity extends AppCompatActivity
     private MusicService musicSrv;
     private Intent playIntent;
     private G G;
-//    private boolean musicBound=false;
 
     ViewTreeObserver.OnGlobalLayoutListener onRotationListener;
 
@@ -199,6 +196,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 	private void showSettings() {
+		if( !checkSongSelected() ) {
+			return;
+		}
+		commitSettingsFragment();
+
 		findViewById(R.id.fragSettingsContainer).setVisibility(View
 				.VISIBLE);
 		findViewById(R.id.song_list).setVisibility(View.GONE);
@@ -206,21 +208,29 @@ public class MainActivity extends AppCompatActivity
 	}
 
     private void showMarkerTimeLine() {
-        if( !musicSrv.isSongSelected() ) {
-            Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
-            new android.os.Handler().postDelayed(
-                    new Runnable() {
-                        public void run() {
-                            ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
-                        }
-                    }, 0);
-            return;
-        }
+		if( !checkSongSelected() ) {
+			return;
+		}
+		removeIfExistsSettingsFragment();
 		findViewById(R.id.fragSettingsContainer).setVisibility(View.GONE);
 		findViewById(R.id.song_list).setVisibility(View.GONE);
 		findViewById(R.id.marker_include).setVisibility(View.VISIBLE);
 
         recalculateTimeLineSoon();
+    }
+
+    private boolean checkSongSelected() {
+	    if( !musicSrv.isSongSelected() ) {
+		    Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+		    new android.os.Handler().postDelayed(
+				    new Runnable() {
+					    public void run() {
+						    ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
+					    }
+				    }, 0);
+		    return false;
+	    }
+	    return true;
     }
 
     private void recalculateTimeLineSoon() {
@@ -241,6 +251,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showSongList() {
+		removeIfExistsSettingsFragment();
 		findViewById( R.id.song_list ).setVisibility( View.VISIBLE );
 		findViewById( R.id.marker_include ).setVisibility( View.GONE );
 		findViewById(R.id.fragSettingsContainer).setVisibility(View
@@ -249,18 +260,18 @@ public class MainActivity extends AppCompatActivity
 
 // --------------------------- below here is the own added methods :) ------------------------------
 
-    public void editMarker(View view) {
+    public void editMarker(final View view) {
         //todo: make all markers attribute editable :)
 
         final LinearLayout parent =(LinearLayout) view.getParent();
-        final Marker m = (Marker) parent.getTag();
+        final Marker editedMarker = (Marker) parent.getTag();
 
 		ViewGroup root = (ViewGroup) findViewById(R.id.marker_include);
-		View editMarker = getLayoutInflater().inflate(
+		final View editMarker = getLayoutInflater().inflate(
 				R.layout.edit_marker, root, false);
         editMarker.findViewById( R.id.edit_marker_time_row ).setVisibility( View.GONE ); // todo: remove
-        ((TextView) editMarker.findViewById(R.id.marker_title)).setText( m.getName() );
-//        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( m.getTime() ) ); // or DisplayTime?
+        ((TextView) editMarker.findViewById(R.id.marker_title)).setText( editedMarker.getName() );
+//        ((EditText) editMarker.findViewById(R.id.marker_time)).setText( Double.toString( editedMarker.getTime() ) ); // or DisplayTime?
 //        editMarker.findViewById(R.id.marker_title).requestFocus();
 //        G.showKeyboard(); //todo: show keyboard
         new AlertDialog.Builder(getContext())
@@ -280,7 +291,7 @@ public class MainActivity extends AppCompatActivity
                                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         ((LinearLayout) parent.getParent()).removeView(parent);
-                                        musicSrv.removeMarker( m.getId() );
+                                        musicSrv.removeMarker( editedMarker.getId() );
                                     }
                                 })
                                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -292,13 +303,16 @@ public class MainActivity extends AppCompatActivity
                                 .show();
                     }
                 })
-                /*
+
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which){
 
                         G.hideKeyboard( getWindow() );
-                        String newStringTime = ((EditText) editMarker.findViewById(R.id.marker_time)).getText().toString();
-                        Long newTime = (long) (Double.parseDouble( newStringTime ) * 1000);
+//                        String newStringTime = ((EditText)
+//			                    editMarker.findViewById(R.id
+//			                    .marker_time)).getText().toString();
+//                        Long newTime = (long) (Double.parseDouble(
+//                  		newStringTime ) * 1000);
 
                         String name = ((EditText) editMarker.findViewById(R.id.marker_title)).getText().toString();
 
@@ -306,10 +320,15 @@ public class MainActivity extends AppCompatActivity
                             return;
                         }
 
-                        doMarker(musicSrv.saveMarker(name, newTime));
+	                    editedMarker.setName( name );
+
+                        musicSrv.updateMarker( editedMarker );
+
+	                    ((TextView) parent.findViewById( R.id
+			                    .marker_title )).setText( name );
+
                     }
                 })
-                */
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         G.hideKeyboard( getWindow() );
@@ -320,8 +339,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createMarker() {
-        if( !musicSrv.isSongSelected() ) {
-            Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+        if( !checkSongSelected() ) {
             return;
         }
         final long time = musicSrv.getCurrentPosition();
@@ -411,13 +429,47 @@ public class MainActivity extends AppCompatActivity
 			);
 		}
 
-		Log.v(TAG, "adding settingsFragment, musicSrv = " + musicSrv);
-		SettingsFragment settingsFragment =
-				SettingsFragment.newInstance(musicSrv);
+	}
+
+	private void removeIfExistsSettingsFragment() {
+
+		FragmentManager fm = getSupportFragmentManager();
+		// todo: Fix so that the song-list, markers also are fragments
+		// and then use popBackStack and addToBackStack
+		// to make back-button work :) FIX-PAR-1
+		// then you can do pooBackStack, then you maby won't have
+		// to do getSupportFragManager,beginTrans,remove,commit mm...
+		// maby :)
+		// fm.popBackStack();
+
+		SettingsFragment settingsFragment = (SettingsFragment)
+				fm.findFragmentById( R.id.fragSettingsContainer );
+
+
+		if( settingsFragment != null ) {
+			getSupportFragmentManager().beginTransaction()
+					.remove( settingsFragment ).commit();
+		}
+	}
+
+	private void commitSettingsFragment() {
+		removeIfExistsSettingsFragment();
+		Song s = musicSrv.getSong();
+
+		SettingsFragment settingsFragment = SettingsFragment
+				.newInstance(
+						s.getStartBefore(),
+						s.getStopAfter(),
+						s.getPauseBefore(),
+						s.getWaitBetween(),
+						s.getLoop());
+
 		FragmentManager fm = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fm.beginTransaction();
 		fragmentTransaction.add(
 				R.id.fragSettingsContainer, settingsFragment);
+		// TODO: implement addToBackStack, FIX-PAR-1
+		// fragmentTransaction.addToBackStack( "settingsFragment" );
 		fragmentTransaction.commit();
 
 	}
@@ -478,7 +530,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-	        musicSrv = null;
+			musicSrv = null;
         }
     };
 
@@ -502,13 +554,18 @@ public class MainActivity extends AppCompatActivity
 			}
 		});
 
-		musicSrv.setMusicServiceListener(new MusicService.musicServiceListener() {
+		musicSrv.setCallOut(new MusicService.MusicServiceListener() {
 			@Override
-			public void notifyEndTime(long endTime) {
-				timeBar.setMax( (int) endTime );
-				for(Marker marker : musicSrv.getCurrentMarkers() ){
-					doMarker( marker );
-				}
+			public void notifyEndTime(final long endTime) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						timeBar.setMax((int) endTime);
+						for (Marker marker : musicSrv.getCurrentMarkers()) {
+							doMarker(marker);
+						}
+					}
+				});
 			}
 
 			@Override
@@ -558,11 +615,30 @@ public class MainActivity extends AppCompatActivity
 			}
 
 			@Override
-			public void nrLoopsLeft(int nrLoopsLeft) {
-				((TextView) findViewById(R.id.displayTimesLeft))
-						.setText("" + nrLoopsLeft);
+			public void nrLoopsLeft(final int nrLoopsLeft) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						((TextView) findViewById(R.id.displayTimesLeft))
+								.setText( String.valueOf(nrLoopsLeft) );
+					}
+				});
+			}
+
+			@Override
+			public void onLoadedSong(final Song song ) {
+				String title = song.getTitle();
+				String artist = song.getArtist();
+
+				ActionBar ab = getSupportActionBar();
+				if(ab != null) ab.setTitle( title + ", " + artist );
 			}
 		});
+
+		// must be after the listeners b/c setSong uses
+		// musicServicListener.onLoadedSong()
+		setSong( musicSrv.getSelectedSongNr() );
+
 	}
 
 	@Override
@@ -590,24 +666,35 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void songPicked(View view) {
-        musicSrv.setSong(Integer.parseInt(view.getTag().toString()));
-        LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+    private void setSong( int songIndex ) {
+		if( songIndex == -1 ) {
+			return;
+		}
+		musicSrv.setSong( songIndex );
+
+		resetSongUI();
+
+		((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
+		showMarkerTimeLine();
+
+		LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+
+		markerList.removeAllViews();
+	}
+
+	/**
+	 * is run when a song is selected.
+	 * @param view - the view of the song selected
+	 */
+	public void songPicked(View view) {
+		int songIndex = Integer.parseInt(view.getTag().toString());
 
         resetSongListBackgroundColor();
-        view.setBackgroundColor( ContextCompat.getColor(getContext(), R.color.colorAccent) );
-        resetSongUI();
+		view.setBackgroundColor( ContextCompat.getColor(
+				getContext(), R.color.colorAccent
+		) );
 
-        String title = (String) ((TextView) view.findViewById(R.id.song_title)).getText();
-        String artist = (String) ((TextView) view.findViewById(R.id.song_artist)).getText();
-
-        ActionBar ab = getSupportActionBar();
-        if(ab != null) ab.setTitle( title + ", " + artist );
-
-        ((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
-        showMarkerTimeLine();
-
-        markerList.removeAllViews();
+		setSong( songIndex );
         // The function notifyEndTime above will be called when the song is loaded
         // it will create the markers.
     }
@@ -664,8 +751,24 @@ public class MainActivity extends AppCompatActivity
         ((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
     }
 
-	@Override
-	public void onFragmentInteraction(Uri uri) {
-		Log.v(TAG, "onFragmentInteraction -> uri = " + uri);
-	}
+@Override
+public void onLoopChange( int nrLoops ) {
+	musicSrv.setLoop( nrLoops );
 }
+@Override
+public void onStartBeforeChange(int startBefore) {
+	musicSrv.setStartBefore( startBefore );
+}
+@Override
+public void onPauseBeforeChange(int pause) {
+	musicSrv.setPauseBefore( pause );
+}
+@Override
+public void onWaitChange( int wait) {
+	musicSrv.setWaitBetween( wait );
+}
+@Override
+public void onStopAfterChange( int stopAfter ) {
+	musicSrv.setStopAfter( stopAfter );
+}
+} // end Class

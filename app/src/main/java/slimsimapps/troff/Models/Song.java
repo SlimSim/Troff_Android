@@ -15,6 +15,13 @@ public class Song {
     private int nrPlayed;
     private String info;
     private int tempo;
+	private int pauseBefore;
+	private int waitBetween;
+	private int selectedStartMarker;
+	private int selectedEndMarker;
+	private int startBefore;
+	private int stopAfter;
+	private int loop;
 
     public Song() {}
 
@@ -68,7 +75,66 @@ public class Song {
     }
 
     public String toString(){
-        return "{"+title+" by "+artist+", id="+ id +", fileId="+fileId+", nrPlayed="+nrPlayed+"}";
+        return "{" +
+		        title + " by " + artist +
+		        ", id = " + id +
+		        //", selectedEndMarker = " + selectedEndMarker +
+		        "}";
     }
 
+	public int getSelectedEndMarker() {
+		return selectedEndMarker;
+	}
+
+	public void setSelectedEndMarker(int selectedEndMarker) {
+		this.selectedEndMarker = selectedEndMarker;
+	}
+
+	public int getSelectedStartMarker() {
+		return selectedStartMarker;
+	}
+
+	public void setSelectedStartMarker(int selectedStartMarker) {
+		this.selectedStartMarker = selectedStartMarker;
+	}
+
+	public int getWaitBetween() {
+		return waitBetween;
+	}
+
+	public void setWaitBetween(int waitBetween) {
+		this.waitBetween = waitBetween;
+	}
+
+	public int getLoop() {
+		return loop;
+	}
+
+	public void setLoop(int loop) {
+		this.loop = loop;
+	}
+
+	public int getStartBefore() {
+		return startBefore;
+	}
+
+	public void setStartBefore(int startBefore) {
+		this.startBefore = startBefore;
+	}
+
+	public int getStopAfter() {
+		return stopAfter;
+	}
+
+	public void setStopAfter(int stopAfter) {
+		this.stopAfter = stopAfter;
+	}
+
+	public int getPauseBefore() {
+		return pauseBefore;
+	}
+
+	public void setPauseBefore(int pauseBefore) {
+		this.pauseBefore = pauseBefore;
+	}
 }
