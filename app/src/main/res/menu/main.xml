@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+	xmlns:app="http://schemas.android.com/apk/res-auto">
 <!--
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        android:name="@string/action_settings"
-        app:showAsAction="never" />
+	<item
+		android:id="@+id/action_settings"
+		android:orderInCategory="100"
+		android:title="@string/action_settings"
+		android:name="@string/action_settings"
+		app:showAsAction="never" />
 -->
-    <item
-        android:id="@+id/action_create_marker"
-        android:icon="@drawable/ic_marker"
-        android:orderInCategory="1"
-        app:showAsAction="ifRoom"
-        android:title="@string/marker"
-        android:name="Marker"/>
+	<item
+		android:id="@+id/action_create_marker"
+		android:icon="@drawable/ic_marker"
+		android:orderInCategory="1"
+		app:showAsAction="ifRoom"
+		android:title="@string/marker"
+		android:name="Marker"/>
 
-    <item
-        android:id="@+id/action_end"
-        android:icon="@drawable/ic_close_black_24dp"
-        android:orderInCategory="2"
-        app:showAsAction="never"
-        android:title="@string/end"
-        android:name="End"/>
+	<item
+		android:id="@+id/action_end"
+		android:icon="@drawable/ic_close_black_24dp"
+		android:orderInCategory="2"
+		app:showAsAction="never"
+		android:title="@string/end"
+		android:name="End"/>
 </menu>

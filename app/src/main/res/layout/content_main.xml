@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
 	android:id="@+id/contentPanel"
-    android:paddingTop="?attr/actionBarSize"
-    android:orientation="vertical"
-    tools:context="slimsimapps.troff.MainActivity" >
+	android:paddingTop="?attr/actionBarSize"
+	android:orientation="vertical"
+	tools:context="slimsimapps.troff.MainActivity" >
 
 	<FrameLayout
 		android:visibility="gone"
@@ -22,19 +22,19 @@
 		android:layout_width="match_parent"
 		android:layout_weight="1" />
 -->
-    <ListView
-        android:id="@+id/song_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorPrimaryLight" >
-    </ListView>
+	<ListView
+		android:id="@+id/song_list"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:background="@color/colorPrimaryLight" >
+	</ListView>
 
 
-    <include
-        layout="@layout/time_line"
-        android:visibility="gone"
-        android:id="@+id/marker_include"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+	<include
+		layout="@layout/time_line"
+		android:visibility="gone"
+		android:id="@+id/marker_include"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent" />
 
 </LinearLayout>

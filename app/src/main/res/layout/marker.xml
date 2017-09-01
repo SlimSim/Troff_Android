@@ -1,59 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:onClick="selectMarker"
-    android:orientation="horizontal"
-    android:padding="5dp" >
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:onClick="selectMarker"
+	android:orientation="horizontal"
+	android:padding="5dp" >
 
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_edit"
-        android:gravity="center"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:onClick="editMarker"
-        android:contentDescription="@string/edit_marker" />
+	<ImageView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_edit"
+		android:gravity="center"
+		android:paddingTop="10dp"
+		android:paddingBottom="10dp"
+		android:paddingLeft="5dp"
+		android:paddingRight="5dp"
+		android:onClick="editMarker"
+		android:contentDescription="@string/edit_marker" />
 
-    <TextView
-        android:id="@+id/marker_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+	<TextView
+		android:id="@+id/marker_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
 		android:paddingEnd="3dip"
 		android:paddingRight="3dip"
-        android:paddingStart="0dip"
+		android:paddingStart="0dip"
 		android:paddingLeft="0dip"
-        android:textColor="@color/textColor"
-        android:textSize="18sp" />
+		android:textColor="@color/textColor"
+		android:textSize="18sp" />
 
-    <TextView
-        android:id="@+id/marker_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/textColor"
-        android:paddingEnd="@dimen/fab_margin"
-        android:paddingRight="@dimen/fab_margin"
+	<TextView
+		android:id="@+id/marker_title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textColor="@color/textColor"
+		android:paddingEnd="@dimen/fab_margin"
+		android:paddingRight="@dimen/fab_margin"
 		android:paddingStart="3dp"
 		android:paddingLeft="3dp"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        />
+		android:textSize="20sp"
+		android:textStyle="bold"
+		/>
 
-    <ImageView
+	<ImageView
 		android:id="@+id/marker_stop"
-        android:contentDescription="@string/end_song_here"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_end_icon"
-        android:gravity="center"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:onClick="selectEndMarker"
-        />
+		android:contentDescription="@string/end_song_here"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:src="@drawable/ic_end_icon"
+		android:gravity="center"
+		android:paddingTop="10dp"
+		android:paddingBottom="10dp"
+		android:paddingLeft="5dp"
+		android:paddingRight="5dp"
+		android:onClick="selectEndMarker"
+		/>
 
 </LinearLayout>
