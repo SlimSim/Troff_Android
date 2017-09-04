@@ -49,6 +49,8 @@
 	<string name="instr_no_fewer_than_2_markers">You can not have fewer than 2 markers per song.</string>
 
 	<string name="Settings">Settings</string>
+	<string name="question_mark">\?</string>
+	<string name="_0">0</string>
 	<string name="_1">1</string>
 	<string name="_2">2</string>
 	<string name="_3">3</string>

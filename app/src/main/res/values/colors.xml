@@ -10,7 +10,7 @@
 	<color name="colorAccent">#FF4081</color>
 	<color name="textColor">#111111</color>
 	<color name="textColorLight">#FFFFFF99</color>
-	<color name="colorPause">#E05915</color>
+	<color name="colorStop">#1a237e</color>
 	<color name="colorWait">#AAAF2B</color>
-	<color name="colorPlay">#431C5D</color>
+	<color name="colorPlay">#FF4081</color>
 </resources>

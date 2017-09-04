@@ -58,19 +58,19 @@
 			<TextView
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:textColor="@color/colorPause"
+				android:textColor="@color/colorAccent"
 				android:gravity="end"
 				android:id="@+id/displayWait"
 				android:textSize="200sp"
-				android:text="3"/>
+				android:text="@string/question_mark"/>
 			<TextView
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:textColor="@color/colorPause"
+				android:textColor="@color/colorAccent"
 				android:gravity="end"
 				android:id="@+id/displayTimesLeft"
 				android:textSize="200sp"
-				android:text="55"/>
+				android:text="@string/question_mark"/>
 
 
 		</LinearLayout>

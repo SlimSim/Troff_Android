@@ -82,11 +82,7 @@ protected void onCreate(Bundle savedInstanceState) {
 				Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
 				return;
 			}
-			if( musicSrv.playOrPause() == MusicService.PlayStatus.PLAYING ){
-				fab.setImageResource(android.R.drawable.ic_media_pause);
-			} else {
-				fab.setImageResource(android.R.drawable.ic_media_play);
-			}
+			musicSrv.playOrPause();
 		}
 	});
 
@@ -573,17 +569,37 @@ public void initiateMusicService() {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					updateUiTime( time );
+					setUiTime( time );
 				}
 			});
 		}
 
 		@Override
-		public void songCompleted() {
+		public void onStop() {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					resetSongUI();
+					setUiToStop();
+				}
+			});
+		}
+
+		@Override
+		public void onWait() {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					setUiToWait();
+				}
+			});
+		}
+
+		@Override
+		public void onPlay() {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					setUiToPlay();
 				}
 			});
 		}
@@ -619,8 +635,7 @@ public void initiateMusicService() {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					((TextView) findViewById(R.id.displayTimesLeft))
-							.setText( String.valueOf(nrLoopsLeft) );
+					setUiNrLoops( nrLoopsLeft );
 				}
 			});
 		}
@@ -629,6 +644,12 @@ public void initiateMusicService() {
 		public void onLoadedSong(final Song song ) {
 			String title = song.getTitle();
 			String artist = song.getArtist();
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					setUiToStop();
+				}
+			});
 
 			ActionBar ab = getSupportActionBar();
 			if(ab != null) ab.setTitle( title + ", " + artist );
@@ -672,14 +693,14 @@ private void setSong( int songIndex ) {
 	}
 	musicSrv.setSong( songIndex );
 
-	resetSongUI();
-
 	((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
 	showMarkerTimeLine();
 
 	LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
 
 	markerList.removeAllViews();
+
+	setUiToStop();
 }
 
 /**
@@ -739,13 +760,38 @@ public void selectStopMarkerUi( View view ) {
 			) );
 }
 
-private void resetSongUI() {
-	FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-	fab.setImageResource(android.R.drawable.ic_media_play);
-	updateUiTime( musicSrv.getCurrentPosition() );
+private void setCounterColor( int color ) {
+	// set color to playing
+	((TextView) findViewById( R.id.displayWait ) ).setTextColor(
+			ContextCompat.getColor( getContext(), color ) );
+	((TextView) findViewById( R.id.displayTimesLeft ) ).setTextColor(
+			ContextCompat.getColor( getContext(), color ) );
 }
 
-private void updateUiTime( long time ) {
+public void setUiNrLoops(int nrLoopsLeft ) {
+	((TextView) findViewById(R.id.displayTimesLeft))
+			.setText(String.valueOf(nrLoopsLeft) );
+}
+
+private void setUiToStop() {
+	((FloatingActionButton) findViewById(R.id.fab) )
+			.setImageResource(android.R.drawable.ic_media_play);
+	setCounterColor( R.color.colorStop);
+}
+
+private void setUiToWait() {
+	((FloatingActionButton) findViewById(R.id.fab) )
+			.setImageResource( android.R.drawable.ic_media_pause );
+	setCounterColor( R.color.colorWait );
+}
+
+private void setUiToPlay() {
+	((FloatingActionButton) findViewById(R.id.fab) )
+			.setImageResource( android.R.drawable.ic_media_pause );
+	setCounterColor( R.color.colorPlay );
+}
+
+private void setUiTime(long time ) {
 	final SeekBar timeBar = (SeekBar) findViewById(R.id.timeBar);
 	timeBar.setProgress( (int) time );
 	((TextView) findViewById(R.id.currentDisplayTime)).setText(G.getDisplayTime( time ));
@@ -755,6 +801,7 @@ private void updateUiTime( long time ) {
 public void onLoopChange( int nrLoops ) {
 	musicSrv.setLoop( nrLoops );
 }
+
 @Override
 public void onStartBeforeChange(int startBefore) {
 	musicSrv.setStartBefore( startBefore );
