@@ -14,7 +14,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -641,6 +640,16 @@ public void initiateMusicService() {
 		}
 
 		@Override
+		public void nrSecondsLeft(final int nrSecondsLeft) {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					setUiNrSeconds( nrSecondsLeft );
+				}
+			});
+		}
+
+		@Override
 		public void onLoadedSong(final Song song ) {
 			String title = song.getTitle();
 			String artist = song.getArtist();
@@ -762,15 +771,20 @@ public void selectStopMarkerUi( View view ) {
 
 private void setCounterColor( int color ) {
 	// set color to playing
-	((TextView) findViewById( R.id.displayWait ) ).setTextColor(
+	((TextView) findViewById( R.id.displaySecondsWait) ).setTextColor(
 			ContextCompat.getColor( getContext(), color ) );
-	((TextView) findViewById( R.id.displayTimesLeft ) ).setTextColor(
+	((TextView) findViewById( R.id.displayNrLoops) ).setTextColor(
 			ContextCompat.getColor( getContext(), color ) );
 }
 
 public void setUiNrLoops(int nrLoopsLeft ) {
-	((TextView) findViewById(R.id.displayTimesLeft))
+	((TextView) findViewById(R.id.displayNrLoops))
 			.setText(String.valueOf(nrLoopsLeft) );
+}
+
+public void setUiNrSeconds( int nrSecondsLeft ) {
+	((TextView) findViewById(R.id.displaySecondsWait))
+			.setText(String.valueOf(nrSecondsLeft) );
 }
 
 private void setUiToStop() {

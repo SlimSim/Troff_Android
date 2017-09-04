@@ -60,7 +60,7 @@
 				android:layout_height="wrap_content"
 				android:textColor="@color/colorAccent"
 				android:gravity="end"
-				android:id="@+id/displayWait"
+				android:id="@+id/displaySecondsWait"
 				android:textSize="200sp"
 				android:text="@string/question_mark"/>
 			<TextView
@@ -68,7 +68,7 @@
 				android:layout_height="wrap_content"
 				android:textColor="@color/colorAccent"
 				android:gravity="end"
-				android:id="@+id/displayTimesLeft"
+				android:id="@+id/displayNrLoops"
 				android:textSize="200sp"
 				android:text="@string/question_mark"/>
 

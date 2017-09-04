@@ -12,7 +12,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import android.content.ContentUris;
@@ -21,6 +20,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import slimsimapps.troff.Models.Marker;
@@ -39,6 +39,8 @@ private int nrLoops;
 
 private int nrLoopsLeft;
 
+private int waitTimeLeft;
+
 private PlayStatus currentStatus;
 
 private enum PlayStatus {
@@ -50,8 +52,7 @@ private enum PlayStatus {
 @SuppressWarnings("unused")
 private static final String TAG = "MusicService";
 
-private ScheduledExecutorService timeUpdateSchedule;
-private ScheduledFuture waitBetweenSchedule;
+private ScheduledExecutorService schedule;
 
 private MediaPlayer player;
 private final IBinder musicBind = new MusicBinder();
@@ -109,7 +110,7 @@ private void completeSong() {
 	if( nrLoopsLeft == 0 ) {
 		stopSong();
 	} else {
-		waitSong();
+		waitSong( getSong().getWaitBetween() );
 	}
 }
 
@@ -119,6 +120,18 @@ public void onCreate() {
 	selectedSongNr =  (int) db.getCurrentSong();
 	player = new MediaPlayer();
 	initMusicPlayer();
+}
+
+private void stopSchedule() {
+	if( schedule != null && !schedule.isTerminated() ) {
+		schedule.shutdownNow();
+	}
+}
+
+@NonNull
+private ScheduledExecutorService newSchedule() {
+	stopSchedule();
+	return Executors.newScheduledThreadPool(1);
 }
 
 private void initMusicPlayer(){
@@ -131,31 +144,26 @@ private void initMusicPlayer(){
 }
 
 private void stopSong() {
-	player.pause();
+	if( player.isPlaying() ) {
+		player.pause();
+	}
 	int startTime = getStartTime();
 	player.seekTo( startTime );
 	callOut.getCurrentTime( startTime );
 
 	currentStatus = PlayStatus.STOPPED;
 	nrLoopsLeft = nrLoops;
+	getSong().getLoop();
 
-	if( timeUpdateSchedule != null &&
-			!timeUpdateSchedule.isTerminated() ) {
-		timeUpdateSchedule.shutdownNow();
-	}
-	if( waitBetweenSchedule != null ) {
-		waitBetweenSchedule.cancel( true );
-	}
+	stopSchedule();
 	callOut.nrLoopsLeft( nrLoopsLeft );
+	callOut.nrSecondsLeft( getSong().getPauseBefore() );
 	callOut.onStop();
 }
 
-private void waitSong() {
-	player.pause();
-
-	if( timeUpdateSchedule != null &&
-			!timeUpdateSchedule.isTerminated() ) {
-		timeUpdateSchedule.shutdownNow();
+private void waitSong( int secondsBeforeStart ) {
+	if( player.isPlaying() ) {
+		player.pause();
 	}
 
 	int startTime = getStartTime();
@@ -165,31 +173,38 @@ private void waitSong() {
 	currentStatus = PlayStatus.WAITING;
 	callOut.onWait();
 	callOut.nrLoopsLeft( nrLoopsLeft );
-	waitBetweenSchedule = Executors
-			.newScheduledThreadPool(1).schedule(new Runnable() {
-				@Override
-				public void run() {
-					playSong();
-				}
-			}, getSong().getWaitBetween(), TimeUnit.SECONDS);
+
+	waitTimeLeft = secondsBeforeStart;
+
+	int delay = 0;
+	int period = 1;
+
+	schedule = newSchedule();
+	schedule.scheduleWithFixedDelay(new Runnable() {
+		@Override
+		public void run() {
+
+			if( waitTimeLeft == 0 ) {
+				playSong();
+			} else {
+				callOut.nrSecondsLeft( waitTimeLeft );
+				waitTimeLeft--;
+			}
+		}
+	}, delay, period, TimeUnit.SECONDS );
 }
 
 private void playSong() {
 	player.start();
 	callOut.nrLoopsLeft( nrLoopsLeft );
+	callOut.nrSecondsLeft( 0 );
 	callOut.onPlay();
 
 	int delay = 0;
 	int period = 10;
-	final MusicService that = this;
 
-	if( timeUpdateSchedule != null &&
-			!timeUpdateSchedule.isTerminated() ) {
-		timeUpdateSchedule.shutdownNow();
-	}
-
-	timeUpdateSchedule = Executors.newScheduledThreadPool(1);
-	timeUpdateSchedule.scheduleWithFixedDelay(new Runnable() {
+	schedule = newSchedule();
+	schedule.scheduleWithFixedDelay(new Runnable() {
 		@Override
 		public void run() {
 			// This is run constantly and instantly
@@ -201,7 +216,7 @@ private void playSong() {
 
 			if( endMarker != null &&
 					getCurrentPosition() >= stopTime ) {
-				that.completeSong();
+				completeSong();
 			} else {
 				callOut.getCurrentTime(
 						getCurrentPosition() );
@@ -222,7 +237,7 @@ public void playOrPause() {
 		this.stopSong();
 	} else {
 		nrLoopsLeft = nrLoops;
-		playSong();
+		waitSong( getSong().getPauseBefore() );
 	}
 }
 
@@ -311,13 +326,6 @@ public void removeMarker(int markerId) {
 public void updateMarker( Marker marker ) {
 	db.updateMarker( marker );
 	currentMarkers = db.getAllMarkers( getCurrSongId() );
-}
-
-@SuppressWarnings("unused")
-public void printCurrSong() {
-	Log.d(TAG, "printCurrSong: songs   = " + songs.get( selectedSongNr ) );
-	Log.d(TAG, "printCurrSong: fileId  = " + getCurrSongFileId() );
-	Log.d(TAG, "printCurrSong: db-song = " + db.getSong( getCurrSongFileId() ));
 }
 
 private int getCurrSongId() {
@@ -429,10 +437,6 @@ public void setSong(int songIndex) {
 	selectedSongNr = songIndex;
 	player.reset();
 	currentStatus = PlayStatus.STOPPED;
-	//todo: ev fix better way to handle the timeUpdateSchedule
-	if( timeUpdateSchedule != null && !timeUpdateSchedule.isTerminated() ) {
-		timeUpdateSchedule.shutdownNow();
-	}
 	Song song = getSong();
 	nrLoops = song.getLoop();
 
@@ -489,6 +493,7 @@ interface MusicServiceListener {
 	void selectStartMarkerIndex(int i);
 	void selectStopMarkerIndex(int i);
 	void nrLoopsLeft(int nrLoopsLeft);
+	void nrSecondsLeft( int nrSecondsLeft );
 	void onLoadedSong(Song song);
 }
 
