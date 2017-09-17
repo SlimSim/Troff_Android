@@ -111,7 +111,7 @@ public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
 public View onCreateView(LayoutInflater inflater, ViewGroup container,
 						 Bundle savedInstanceState) {
 
-	View view = inflater.inflate(R.layout.fragment_settings,
+	final View view = inflater.inflate(R.layout.fragment_settings,
 			container, false);
 
 	((EditText) view.findViewById(R.id.settingsStartBefore))
@@ -123,102 +123,109 @@ public View onCreateView(LayoutInflater inflater, ViewGroup container,
 	((EditText) view.findViewById(R.id.settingsWaitBetween))
 			.setText( "" + waitBetween );
 
-	View loopBut = view.findViewWithTag( "" + nrLoops );
+	final View loopBut = view.findViewWithTag( "" + nrLoops );
 
-	if( loopBut != null ) {
-		onLoopClick( loopBut );
-	} else {
-		onLoopClick( view.findViewById( R.id.loop1 ) );
-	}
-
-	((EditText) view.findViewById(
-			R.id.settingsWaitBetween)).addTextChangedListener(
-			new TextWatcher() {
-				@Override
-				public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-				}
-
-				@Override
-				public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-				}
-
-				@Override
-				public void afterTextChanged(Editable editable) {
-					int wait = getIntFromEditable( editable );
-					callOut.onWaitChange( wait );
-				}
+	view.post(new Runnable() {
+		@Override
+		public void run() {
+			if( loopBut != null ) {
+				onLoopClick( loopBut );
+			} else {
+				onLoopClick( view.findViewById( R.id.loop1 ) );
 			}
 
-	);
-((EditText) view.findViewById(
-		R.id.settingsPauseBefore)).addTextChangedListener(
-		new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
 
-			@Override
-			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
-
-			@Override
-			public void afterTextChanged(Editable editable) {
-				int pause = getIntFromEditable( editable );
-				callOut.onPauseBeforeChange( pause );
-			}
-		}
-);
-((EditText) view.findViewById(
-		R.id.settingsStartBefore)).addTextChangedListener(
-		new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
-
-			@Override
-			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
-
-			@Override
-			public void afterTextChanged(Editable editable) {
-				int startBefore = getIntFromEditable( editable );
-				callOut.onStartBeforeChange( startBefore * 1000 );
-			}
-		}
-);
-((EditText) view.findViewById(
-		R.id.settingsStopAfter)).addTextChangedListener(
-		new TextWatcher() {
-			@Override
-			public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
-
-			@Override
-			public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-			}
-
-			@Override
-			public void afterTextChanged(Editable editable) {
-				int stopAfter = getIntFromEditable( editable );
-				callOut.onStopAfterChange( stopAfter * 1000 );
-			}
-		}
-);
-	LinearLayout loopParent = (LinearLayout) view.findViewById(
-			R.id.settingsLoopParent);
-	for( int i = 0; i < loopParent.getChildCount(); i++ ) {
-		LinearLayout ll = (LinearLayout)loopParent.getChildAt(i);
-		for( int j = 0; j < ll.getChildCount(); j++ ) {
-			ll.getChildAt(j).setOnClickListener(
-					new View.OnClickListener() {
+			((EditText) view.findViewById(
+					R.id.settingsStartBefore)).addTextChangedListener(
+					new TextWatcher() {
 						@Override
-						public void onClick(View view) {
-							onLoopClick(view);
+						public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void afterTextChanged(Editable editable) {
+							int startBefore = getIntFromEditable( editable );
+							callOut.onStartBeforeChange( startBefore * 1000 );
 						}
 					}
 			);
+			((EditText) view.findViewById(
+					R.id.settingsStopAfter)).addTextChangedListener(
+					new TextWatcher() {
+						@Override
+						public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void afterTextChanged(Editable editable) {
+							int stopAfter = getIntFromEditable( editable );
+							callOut.onStopAfterChange( stopAfter * 1000 );
+						}
+					}
+			);
+			((EditText) view.findViewById(
+					R.id.settingsPauseBefore)).addTextChangedListener(
+					new TextWatcher() {
+						@Override
+						public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void afterTextChanged(Editable editable) {
+							int pause = getIntFromEditable( editable );
+							callOut.onPauseBeforeChange( pause );
+						}
+					}
+			);
+			((EditText) view.findViewById(
+					R.id.settingsWaitBetween)).addTextChangedListener(
+					new TextWatcher() {
+						@Override
+						public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+						}
+
+						@Override
+						public void afterTextChanged(Editable editable) {
+							int wait = getIntFromEditable( editable );
+							callOut.onWaitChange( wait );
+						}
+					}
+
+			);
+			LinearLayout loopParent = (LinearLayout) view.findViewById(
+					R.id.settingsLoopParent);
+			for( int i = 0; i < loopParent.getChildCount(); i++ ) {
+				LinearLayout ll = (LinearLayout)loopParent.getChildAt(i);
+				for( int j = 0; j < ll.getChildCount(); j++ ) {
+					ll.getChildAt(j).setOnClickListener(
+							new View.OnClickListener() {
+								@Override
+								public void onClick(View view) {
+									onLoopClick(view);
+								}
+							}
+					);
+				}
+			}
 		}
-	}
+	});
+
 
 	return view;
 }

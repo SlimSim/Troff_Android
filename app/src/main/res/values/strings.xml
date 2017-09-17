@@ -65,4 +65,5 @@
 	<string name="start_before">Start before</string>
 	<string name="stop_after">Stop after</string>
 	<string name="pause_before">Pause before</string>
+	<string name="_inf">∞</string>
 </resources>

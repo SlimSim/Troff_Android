@@ -5,7 +5,6 @@
 	android:orientation="vertical"
 	tools:context="slimsimapps.troff.SettingsFragment">
 
-	<!-- TODO: Update blank fragment layout -->
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -24,7 +23,7 @@
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:inputType="number"
-			android:text="@string/_3"
+			android:text="@string/question_mark"
 			android:layout_weight="1"/>
 	</LinearLayout>
 
@@ -40,12 +39,11 @@
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:inputType="number"
-			android:text="@string/_2"
+			android:text="@string/question_mark"
 			android:layout_weight="1"/>
 	</LinearLayout>
 
 	<LinearLayout
-		android:visibility="gone"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content">
 		<TextView
@@ -57,7 +55,7 @@
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:inputType="number"
-			android:text="@string/_1"
+			android:text="@string/question_mark"
 			android:layout_weight="1"/>
 	</LinearLayout>
 
@@ -73,7 +71,7 @@
 			android:layout_width="0dp"
 			android:layout_height="wrap_content"
 			android:inputType="number"
-			android:text="@string/_1"
+			android:text="@string/question_mark"
 			android:layout_weight="1"/>
 	</LinearLayout>
 
@@ -166,7 +164,7 @@
 				style="@style/Base.TextAppearance.AppCompat.Button"
 				android:layout_height="wrap_content"
 				android:tag="0"
-				android:text="inf"/>
+				android:text="@string/_inf"/>
 		</LinearLayout>
 	</LinearLayout>
 

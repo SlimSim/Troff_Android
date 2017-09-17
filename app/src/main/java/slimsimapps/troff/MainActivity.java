@@ -58,6 +58,24 @@ private MusicService musicSrv;
 private Intent playIntent;
 private G G;
 
+//connect to the service
+private ServiceConnection musicConnection = new ServiceConnection(){
+
+	@Override
+	public void onServiceConnected(ComponentName name, IBinder service) {
+
+		MusicBinder binder = (MusicBinder)service;
+		//get service
+		musicSrv = binder.getService();
+		checkAndInitiateMusicService();
+	}
+
+	@Override
+	public void onServiceDisconnected(ComponentName name) {
+		musicSrv = null;
+	}
+};
+
 ViewTreeObserver.OnGlobalLayoutListener onRotationListener;
 
 @Override
@@ -94,6 +112,25 @@ protected void onCreate(Bundle savedInstanceState) {
 	NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 	navigationView.setNavigationItemSelectedListener(this);
 	navigationView.getMenu().getItem(0).setChecked(true);
+}
+
+@Override
+protected void onStart() {
+
+	if(playIntent==null){
+		playIntent = new Intent(this, MusicService.class);
+		bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+		startService(playIntent);
+	}
+	super.onStart();
+}
+
+@Override
+protected void onDestroy() {
+	stopService(playIntent);
+	unbindService(musicConnection);
+	musicSrv=null;
+	super.onDestroy();
 }
 
 @Override
@@ -512,23 +549,6 @@ private void handleExternalStorageNotGranted(){
 			.show();
 }
 
-//connect to the service
-final private ServiceConnection musicConnection = new ServiceConnection(){
-
-	@Override
-	public void onServiceConnected(ComponentName name, IBinder service) {
-		MusicBinder binder = (MusicBinder)service;
-		//get service
-		musicSrv = binder.getService();
-		checkAndInitiateMusicService();
-	}
-
-	@Override
-	public void onServiceDisconnected(ComponentName name) {
-		musicSrv = null;
-	}
-};
-
 public void initiateMusicService() {
 	ArrayList<Song> songList = musicSrv.setSongList();
 	ListView songView = (ListView) findViewById(R.id.song_list);
@@ -671,24 +691,6 @@ public void initiateMusicService() {
 
 }
 
-@Override
-protected void onStart() {
-	super.onStart();
-	if(playIntent==null){
-		playIntent = new Intent(this, MusicService.class);
-		bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-		startService(playIntent);
-	}
-}
-
-@Override
-protected void onDestroy() {
-	stopService(playIntent);
-	unbindService(musicConnection);
-	musicSrv=null;
-	super.onDestroy();
-}
-
 private void resetSongListBackgroundColor() {
 	ListView songList = ((ListView) findViewById( R.id.song_list ));
 	for(int i = 0; i < songList.getChildCount(); i++ ) {
@@ -778,8 +780,16 @@ private void setCounterColor( int color ) {
 }
 
 public void setUiNrLoops(int nrLoopsLeft ) {
+	String loops;
+
+	if( nrLoopsLeft == 0 ) {
+		loops = getResources().getString( R.string._inf );
+	} else {
+		loops = String.valueOf( nrLoopsLeft );
+	}
+
 	((TextView) findViewById(R.id.displayNrLoops))
-			.setText(String.valueOf(nrLoopsLeft) );
+			.setText( loops );
 }
 
 public void setUiNrSeconds( int nrSecondsLeft ) {
