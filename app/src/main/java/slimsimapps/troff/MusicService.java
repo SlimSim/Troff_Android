@@ -23,6 +23,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import slimsimapps.troff.Exceptions.NoSongsException;
 import slimsimapps.troff.Models.Marker;
 import slimsimapps.troff.Models.Song;
 import slimsimapps.troff.database.DB;
@@ -57,12 +58,9 @@ private final IBinder musicBind = new MusicBinder();
 
 private ArrayList<Song> songs;
 private int selectedSongNr;
-private List<Marker> currentMarkers;
+
 final private DB db = new DB(MusicService.this);
 private MusicServiceListener callOut;
-
-private Marker startMarker;
-private Marker endMarker;
 
 
 @SuppressWarnings("unused")
@@ -70,8 +68,8 @@ public String toString() {
 	return "ms: {" +
 			"\n  waitTimeLeft = " + waitTimeLeft +
 			"\n  nrLoopsLeft = " + nrLoopsLeft +
-			"\n  startMarker = " + startMarker +
-			"\n  endMarker = " + endMarker +
+			//"\n  startMarker = " + startMarker +
+			//"\n  endMarker = " + endMarker +
 			"\n  currentStatus = " + currentStatus +
 			"}";
 }
@@ -94,17 +92,6 @@ public void onCompletion(MediaPlayer mediaPlayer) {
 	completeSong();
 }
 
-private int getStartTime() {
-	int startTime;
-	Song song = getSong();
-	startTime = ((int) startMarker.getTime()) - song.getStartBefore();
-
-	if( startTime < 0 ) {
-		startTime = 0;
-	}
-	return startTime;
-}
-
 private void completeSong() {
 	Song song = getSong();
 	if( song.getLoop() == 0 ) {
@@ -115,7 +102,7 @@ private void completeSong() {
 	if( nrLoopsLeft == 0 ) {
 		stopSong();
 	} else {
-		waitSong( getSong().getWaitBetween() );
+		waitSong( song.getWaitBetween() );
 	}
 }
 
@@ -152,7 +139,7 @@ private void stopSong() {
 	if( player.isPlaying() ) {
 		player.pause();
 	}
-	int startTime = getStartTime();
+	int startTime = getSong().getStartTime();
 	player.seekTo( startTime );
 	callOut.getCurrentTime( startTime );
 
@@ -170,7 +157,7 @@ private void waitSong( int secondsBeforeStart ) {
 		player.pause();
 	}
 
-	int startTime = getStartTime();
+	int startTime = getSong().getStartTime();
 	player.seekTo( startTime );
 	callOut.getCurrentTime( startTime );
 
@@ -215,22 +202,20 @@ private void playSong() {
 			// when the song is playing
 
 			Song song = getSong();
-			long stopTime = endMarker.getTime() +
-					song.getStopAfter();
+			song.getStopAfter();
 
-			if( endMarker != null &&
-					getCurrentPosition() >= stopTime ) {
+			long stopTime = song.getStopTime();
+
+			if( getCurrentPosition() >= stopTime ) {
 				completeSong();
 			} else {
-				callOut.getCurrentTime(
-						getCurrentPosition() );
+				callOut.getCurrentTime( getCurrentPosition() );
 			}
 		}
 	}, delay, period, TimeUnit.MILLISECONDS);
 
 	Song song = getSong();
 	song.incrementNrPlayed();
-	db.updateSong(song);
 	currentStatus = PlayStatus.PLAYING;
 }
 
@@ -250,51 +235,43 @@ public void seekTo(int time) {
 	player.seekTo( time );
 }
 
-private int getMarkerIndex( Marker m ) {
-	Collections.sort(currentMarkers);
-	return currentMarkers.indexOf( m );
+public void saveStartMarker( Marker marker ) {
+	getSong().setSelectedStartMarker( marker );
+	selectStartMarker( marker );
+}
+
+public void saveEndMarker( Marker marker ) {
+	getSong().setSelectedEndMarker( marker );
+	selectEndMarker( marker );
 }
 
 public void selectStartMarker( Marker marker ) {
-	Song song = getSong();
-	startMarker = marker;
-	int startTime = getStartTime();
+	int startTime = getSong().getStartTime();
 	seekTo( startTime );
 	callOut.getCurrentTime( startTime );
 
-	int index = getMarkerIndex( marker );
+	int index = getSong().getMarkerIndex( marker );
 	callOut.selectStartMarkerIndex( index );
-
-	song.setSelectedStartMarker( index );
-	db.updateSong( song );
 }
 
 public void selectEndMarker( Marker marker ) {
-	endMarker = marker;
-	int index = getMarkerIndex( marker );
+	int index = getSong().getMarkerIndex( marker );
 	callOut.selectStopMarkerIndex( index );
-
-	Song song = getSong();
-	song.setSelectedEndMarker( index );
-	db.updateSong( song );
 }
 
 public void setStartBefore( int startBefore ) {
 	Song song = getSong();
 	song.setStartBefore( startBefore );
-	db.updateSong( song );
 }
 
 public void setStopAfter( int stopAfter ) {
 	Song song = getSong();
 	song.setStopAfter( stopAfter );
-	db.updateSong( song );
 }
 
 public void setPauseBefore( int pauseBefore ) {
 	Song song = getSong();
 	song.setPauseBefore( pauseBefore );
-	db.updateSong( song );
 	if( currentStatus == PlayStatus.STOPPED ) {
 		callOut.nrSecondsLeft(pauseBefore);
 	}
@@ -303,13 +280,11 @@ public void setPauseBefore( int pauseBefore ) {
 public void setWaitBetween( int waitBetween ) {
 	Song song = getSong();
 	song.setWaitBetween( waitBetween );
-	db.updateSong( song );
 }
 
 public void setLoop( int loop ) {
 	Song song = getSong();
 	song.setLoop( loop );
-	db.updateSong( song );
 	nrLoopsLeft = loop;
 	callOut.nrLoopsLeft( loop );
 }
@@ -323,32 +298,20 @@ public int getSelectedSongNr() {
 }
 
 public List<Marker> getCurrentMarkers() {
-	return currentMarkers;
+	return getSong().getMarkers();
 }
 
-public Marker saveMarker(String name, long time) {
-	Marker m = db.insertMarker( new Marker(name, time, getCurrSongId() ) );
-	currentMarkers = db.getAllMarkers( getCurrSongId() );
-	return m;
+public Marker addMarker(String name, long time) {
+	return getSong().addMarker( name, time );
 }
 
-public void removeMarker(int markerId) {
-	db.removeMarker( getCurrSongId(), markerId );
-	currentMarkers = db.getAllMarkers( getCurrSongId() );
+public void removeMarker(Marker marker) {
+	getSong().removeMarker(marker);
 }
 
 public void updateMarker( Marker marker ) {
-	db.updateMarker( marker );
-	currentMarkers = db.getAllMarkers( getCurrSongId() );
+	getSong().updateMarker( marker );
 }
-
-private int getCurrSongId() {
-	return songs.get( selectedSongNr ).getId();
-}
-private long getCurrSongFileId() {
-	return songs.get( selectedSongNr ).getFileId();
-}
-
 
 public ArrayList<Song> setSongList() {
 
@@ -367,17 +330,21 @@ public ArrayList<Song> setSongList() {
 				(android.provider.MediaStore.Audio.Media._ID);
 		int artistColumn = musicCursor.getColumnIndex
 				(android.provider.MediaStore.Audio.Media.ARTIST);
+		int pathColumn = musicCursor.getColumnIndex
+				(android.provider.MediaStore.Audio.Media.DATA);
+		int isMusicColumn = musicCursor.getColumnIndex
+				(MediaStore.Audio.Media.IS_MUSIC);
 
 		//add songs to list
 		do {
-			long fileId = musicCursor.getLong(idColumn);
-			String thisTitle = musicCursor.getString(titleColumn);
-			String thisArtist = musicCursor.getString(artistColumn);
-			//Song newSong = musicSrv.getSongFromDB( fileId, thisTitle, thisArtist );
+			if( musicCursor.getInt( isMusicColumn ) != 1 ) {
+				continue;
+			}
 			Song newSong = new Song();
-			newSong.setTitle( thisTitle );
-			newSong.setArtist( thisArtist );
-			newSong.setFileId( fileId );
+			newSong.setTitle( musicCursor.getString(titleColumn) );
+			newSong.setArtist( musicCursor.getString( artistColumn ) );
+			newSong.setFileId( musicCursor.getLong(idColumn) );
+			newSong.setPath( musicCursor.getString(pathColumn) );
 			songList.add( newSong );
 		}
 		while (musicCursor.moveToNext());
@@ -394,10 +361,64 @@ public ArrayList<Song> setSongList() {
 	return songList;
 }
 
+public Song getSong() {
+	if( songs.size() == 0 ) {
+		throw new NoSongsException("MusicService / getSong: no songs!");
+	}
+
+	if( selectedSongNr == -1 ) {
+		selectedSongNr = 0;
+	}
+
+	return songs.get( selectedSongNr );
+}
+
+public void setSong(int songIndex) {
+	if( player.isPlaying() ) {
+		this.stopSong();
+	}
+	getSong().discardData();
+	selectedSongNr = songIndex;
+	player.reset();
+	currentStatus = PlayStatus.STOPPED;
+	Song song = getSong();
+
+	song.readData();
+	callOut.onStop();
+	Uri trackUri = ContentUris.withAppendedId(
+			MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+			song.getFileId() );
+
+	try {
+		player.setDataSource(getApplicationContext(), trackUri);
+	} catch ( Exception e ) {
+		Log.e(TAG, "setSong: Error setting data source", e);
+	}
+	db.setCurrentSong( songIndex );
+	player.prepareAsync();
+}
+
 class MusicBinder extends Binder {
 	MusicService getService() {
 		return MusicService.this;
 	}
+}
+
+@Override
+public void onPrepared(MediaPlayer mp) {
+	Song song = getSong();
+
+	if( !song.hasMarkers() ) {
+		song.addMarker(getResources().getString(R.string.start), 0);
+		song.addMarker(getResources().getString(R.string.end), mp.getDuration());
+	}
+
+	callOut.onSongLoaded( song, mp.getDuration() );
+	callOut.nrLoopsLeft( song.getLoop() );
+	callOut.nrSecondsLeft( song.getPauseBefore() );
+
+	selectStartMarker( song.getSelectedStartMarker() );
+	selectEndMarker( song.getSelectedEndMarker() );
 }
 
 @Override
@@ -412,98 +433,16 @@ public boolean onUnbind(Intent intent){
 	return false;
 }
 
-@Override
-public void onPrepared(MediaPlayer mp) {
-	int songId = getCurrSongId();
-
-	currentMarkers = db.getAllMarkers( songId );
-
-	if( currentMarkers.size() == 0 ) {
-		Marker m = new Marker("Start", 0, songId);
-		db.insertMarker(m);
-		currentMarkers.add(m);
-
-		m = new Marker("End", mp.getDuration(), songId);
-		db.insertMarker(m);
-		currentMarkers.add(m);
-	}
-
-	callOut.notifyEndTime( mp.getDuration() );
-
-	Song song = getSong();
-
-	int startMarkerId = song.getSelectedStartMarker();
-	int endMarkerId = song.getSelectedEndMarker();
-
-	selectStartMarker( currentMarkers.get( startMarkerId ) );
-
-	if( endMarkerId == -1 ) {
-		endMarkerId = currentMarkers.size() - 1;
-	}
-	selectEndMarker( currentMarkers.get( endMarkerId ) );
-
-}
-
-public void setSong(int songIndex) {
-	if( player.isPlaying() ) {
-		this.stopSong();
-	}
-	selectedSongNr = songIndex;
-	player.reset();
-	currentStatus = PlayStatus.STOPPED;
-	Song song = getSong();
-
-	callOut.onLoadedSong( song );
-	callOut.nrLoopsLeft( song.getLoop() );
-	callOut.nrSecondsLeft( song.getPauseBefore() );
-	callOut.onStop();
-	Uri trackUri = ContentUris.withAppendedId(
-			MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-			song.getFileId() );
-
-	try{
-		player.setDataSource(getApplicationContext(), trackUri);
-	}
-	catch(Exception e){
-		Log.e(TAG, "setSong: Error setting data source", e);
-	}
-	db.setCurrentSong( songIndex );
-	player.prepareAsync();
-}
-
-public Song getSong() {
-	if( selectedSongNr == -1 ) {
-		selectedSongNr = 0;
-	}
-	Song song = songs.get( selectedSongNr );
-
-	if( song.getId() == -1 ) {
-		Song dbSong = db.getSong( getCurrSongFileId() );
-		if( dbSong == null ) {
-			song.setSelectedEndMarker( 1 );
-			song.setLoop( 1 );
-			song.setPauseBefore( 3 );
-			song.setWaitBetween( 1 );
-
-			dbSong = db.insertSong( song );
-		}
-		song = dbSong;
-		songs.set( selectedSongNr, song );
-	}
-	return song;
-}
-
 interface MusicServiceListener {
-	void notifyEndTime(long endTime);
-	void getCurrentTime(long currentTime);
+	void onSongLoaded( Song song, long duration );
+	void getCurrentTime( long currentTime );
 	void onStop();
 	void onWait();
 	void onPlay();
-	void selectStartMarkerIndex(int i);
-	void selectStopMarkerIndex(int i);
-	void nrLoopsLeft(int nrLoopsLeft);
+	void selectStartMarkerIndex( int i );
+	void selectStopMarkerIndex( int i );
+	void nrLoopsLeft( int nrLoopsLeft );
 	void nrSecondsLeft( int nrSecondsLeft );
-	void onLoadedSong(Song song);
 }
 
 }// end Class

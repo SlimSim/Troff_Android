@@ -12,17 +12,26 @@ final class DBContract {
 @SuppressWarnings("unused")
 private static final String TAG = "DBContract";
 
-static final  int    DATABASE_VERSION    = 2;
+static final  int    DATABASE_VERSION    = 3;
 static final  String DATABASE_NAME       = "database.db";
 
-private static final String PRIMARY_KEY         = " INTEGER PRIMARY KEY AUTOINCREMENT, ";
-private static final String TEXT_TYPE           = " TEXT";
-private static final String INT_TYPE            = " INT";
-private static final String LONG_TYPE           = " LONG";
-private static final String COMMA_SEP           = ",";
-static final String END = ";";
-static final String ASCENDING                   = " ASC";
-@SuppressWarnings("unused") static final String DESCENDING = " DESC";
+@SuppressWarnings("unused") private static final String PRIMARY_KEY		= " INTEGER PRIMARY KEY AUTOINCREMENT, ";
+@SuppressWarnings("unused") private static final String TEXT_TYPE		= " TEXT";
+@SuppressWarnings("unused") private static final String INT_TYPE		= " INT";
+@SuppressWarnings("unused") private static final String LONG_TYPE		= " LONG";
+@SuppressWarnings("unused") private static final String COMMA_SEP		= ",";
+@SuppressWarnings("unused") static final String END						= ";";
+@SuppressWarnings("unused") static final String ASCENDING				= " ASC";
+@SuppressWarnings("unused") static final String DESCENDING				= " DESC";
+
+
+/**
+ * To remove certain classes, the delete statement must be outside of the classes :)
+ */
+public static final String UPDATE_TO_VERSION_3 =
+		"DROP TABLE IF EXISTS Song" + END +
+		"DROP TABLE IF EXISTS Marker" + END;
+
 
 // To prevent someone from accidentally instantiating the contract class,
 // give it an empty constructor.
@@ -61,17 +70,14 @@ static abstract class Setting {
 			Cursor cursor) {
 		slimsimapps.troff.Models.Setting setting =
 				new slimsimapps.troff.Models.Setting();
-		setting.setId(cursor.getInt(
-				cursor.getColumnIndex(C_ID)));
-		setting.setName(cursor.getString(
-				cursor.getColumnIndex(C_NAME)));
-		setting.setValue(cursor.getLong(
-				cursor.getColumnIndex(C_VALUE)));
+		setting.setId(cursor.getInt(cursor.getColumnIndex(C_ID)));
+		setting.setName(cursor.getString(cursor.getColumnIndex(C_NAME)));
+		setting.setValue(cursor.getLong(cursor.getColumnIndex(C_VALUE)));
 		return setting;
 	}
 }
 
-
+/*
 static abstract class Song {
 
 	static final String T_NAME = "Song";
@@ -220,6 +226,7 @@ static abstract class Marker {
 		return marker;
 	}
 }
+*/
 
 static private String getS(Cursor cursor, String columnName ) {
 	return cursor.getString( cursor.getColumnIndex( columnName ) );

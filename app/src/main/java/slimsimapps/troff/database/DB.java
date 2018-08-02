@@ -30,18 +30,24 @@ public DB(Context context) {
 
 @Override
 public void onCreate(SQLiteDatabase db) {
-	db.execSQL( DBContract.Song.CREATE_TABLE );
-	db.execSQL( DBContract.Marker.CREATE_TABLE );
+	Log.v( TAG, "onCreate ->" );
+	//db.execSQL( DBContract.Song.CREATE_TABLE );
+	//db.execSQL( DBContract.Marker.CREATE_TABLE );
 	db.execSQL( DBContract.Setting.CREATE_TABLE );
 }
 
 @Override
 public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+	Log.v(TAG, "onUpgrade -> oldVersion = " + oldVersion + ", newVersion = " + newVersion );
 //        if(oldVersion < 1 )
 // tex:        db.execSQL("table Song add column Color String not null");
 	if( oldVersion < 2 ) {
-		execMultiSQL(db, DBContract.Song.UPDATE_TO_VERSION_2);
+		//execMultiSQL(db, DBContract.Song.UPDATE_TO_VERSION_2);
 		execMultiSQL(db, DBContract.Setting.CREATE_TABLE);
+	}
+	if( oldVersion < 3 ) {
+		Log.v(TAG, "onUpgrade: UPDATE_TO_VERSION_3!!! ");
+		execMultiSQL(db, DBContract.UPDATE_TO_VERSION_3);
 	}
 }
 
@@ -123,6 +129,7 @@ public long getCurrentSong(){
 
 }
 
+/*
 public Song insertSong( Song song ) {
 	database = this.getReadableDatabase();
 	ContentValues cv = DBContract.Song.getContentValues( song );
@@ -181,7 +188,6 @@ public void removeMarker(int songId, int markerId) {
 	database.close();
 }
 
-@SuppressWarnings("unused")
 public void updateMarker(Marker marker) {
 	database = this.getReadableDatabase();
 	ContentValues cv = DBContract.Marker.getContentValues( marker );
@@ -250,5 +256,6 @@ public void updateSong(Song song) {
 	}
 	database.close();
 }
+*/
 }//end Class
 

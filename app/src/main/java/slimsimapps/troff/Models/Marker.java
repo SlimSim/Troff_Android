@@ -1,7 +1,6 @@
 package slimsimapps.troff.Models;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 /**
 * Created on 2016-10-21, by Slim Sim.
@@ -11,17 +10,15 @@ public class Marker implements Comparable<Marker>{
 @SuppressWarnings("unused")
 private static final String TAG = "Marker";
 
-private int id, songId;
-private String name, info, color;
-private long time;
+private String id, name, info, color;
+private double time;
 
-public Marker() {
-}
-
-public Marker(String name, long time, int songId) {
+public Marker(String id, String name, long time, String info, String color) {
+	this.id = id;
 	this.name = name;
-	this.time = time;
-	this.songId = songId;
+	setTime( time );
+	this.info = info;
+	this.color = color;
 }
 
 public String getName() {
@@ -32,9 +29,6 @@ public void setName(String name) {
 	this.name = name;
 }
 
-public long getTime() {
-	return time;
-}
 
 private static String getDisplayTime(long totalMillis) {
 	long totalSecs = totalMillis/1000,
@@ -53,27 +47,23 @@ private static String getDisplayTime(long totalMillis) {
 }
 
 public String getDisplayTime() {
-	return getDisplayTime( time );
+	return getDisplayTime( getTime() );
+}
+
+public long getTime() {
+	return (long) time * 1000;
 }
 
 public void setTime(long time) {
-	this.time = time;
+	this.time = ((double) time) / 1000;
 }
 
-public int getId() {
+public String getId() {
 	return id;
 }
 
-public void setId(int id) {
+public void setId(String id) {
 	this.id = id;
-}
-
-public int getSongId() {
-	return songId;
-}
-
-public void setSongId(int songId) {
-	this.songId = songId;
 }
 
 public String getInfo() {
@@ -93,7 +83,13 @@ public void setColor(String color) {
 }
 
 public String toString() {
-	return "{" + name +", id="+id+", songId="+songId+", time="+time + "}";
+	return "{" +
+			name +
+			", id=" + id +
+			", time=" + time +
+			//", info=" + info +
+			//", color=" + color +
+			"}";
 }
 
 @Override
@@ -110,15 +106,6 @@ public boolean equals(Object obj) {
 	if (getClass() != obj.getClass())
 		return false;
 	Marker other = (Marker) obj;
-	if (id != other.id)
-		return false;
-	if (songId != other.songId) {
-		Log.w(TAG, "equals: markerId is same, but songId is not!" +
-				"\nthis  = " + this +
-				"\nother = " + other
-		);
-		return false;
-	}
-	return true;
+	return id.equals(other.id);
 }
 }// end Class

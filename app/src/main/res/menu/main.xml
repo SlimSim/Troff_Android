@@ -22,6 +22,6 @@
 		android:icon="@drawable/ic_close_black_24dp"
 		android:orderInCategory="2"
 		app:showAsAction="never"
-		android:title="@string/end"
+		android:title="@string/quit_app"
 		android:name="End"/>
 </menu>

@@ -10,7 +10,7 @@
 
 	<string name="action_settings">Settings</string>
 	<string name="shuffle">Shuffle</string>
-	<string name="end">Quit app</string>
+	<string name="quit_app">Quit app</string>
 	<string name="importTitle">Import</string>
 	<string name="gallery">Gallery</string>
 	<string name="slideshow">Slideshow</string>
@@ -66,4 +66,6 @@
 	<string name="stop_after">Stop after</string>
 	<string name="pause_before">Pause before</string>
 	<string name="_inf">∞</string>
+	<string name="end">End</string>
+	<string name="start">Start</string>
 </resources>

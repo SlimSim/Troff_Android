@@ -14,6 +14,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -95,7 +96,7 @@ protected void onCreate(Bundle savedInstanceState) {
 	fab.setOnClickListener(new View.OnClickListener() {
 		@Override
 		public void onClick(View view) {
-			if( !musicSrv.isSongSelected() ){
+			if( !musicSrv.isSongSelected() ) {
 				Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
 				return;
 			}
@@ -206,29 +207,14 @@ public boolean onNavigationItemSelected(@NonNull MenuItem item) {
 			showSettings();
 			break;
 	}
-	/*
-	if (id == R.id.nav_camera) {
-		// Handle the camera action
-	} else if (id == R.id.nav_gallery) {
 
-	} else if (id == R.id.nav_slideshow) {
-
-	} else if (id == R.id.nav_manage) {
-
-	} else if (id == R.id.nav_share) {
-
-	} else if (id == R.id.nav_send) {
-
-	}
-*/
-
-	DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+	DrawerLayout drawer = findViewById(R.id.drawer_layout);
 	drawer.closeDrawer(GravityCompat.START);
 	return true;
 }
 
 private void showSettings() {
-	if( !checkSongSelected() ) {
+	if(songNeedsToBeSelected()) {
 		return;
 	}
 	commitSettingsFragment();
@@ -240,7 +226,7 @@ private void showSettings() {
 }
 
 private void showMarkerTimeLine() {
-	if( !checkSongSelected() ) {
+	if( songNeedsToBeSelected() ) {
 		return;
 	}
 	removeIfExistsSettingsFragment();
@@ -251,17 +237,17 @@ private void showMarkerTimeLine() {
 	recalculateTimeLineSoon();
 }
 
-private boolean checkSongSelected() {
-	if( !musicSrv.isSongSelected() ) {
-		Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
-		new android.os.Handler().postDelayed(
-				new Runnable() {
-					public void run() {
-						((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
-					}
-				}, 0);
+private boolean songNeedsToBeSelected() {
+	if( musicSrv.isSongSelected() ) {
 		return false;
 	}
+	Toast.makeText(getContext(), R.string.pick_song_first, Toast.LENGTH_SHORT).show();
+	new android.os.Handler().postDelayed(
+			new Runnable() {
+				public void run() {
+					((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(0).setChecked(true);
+				}
+			}, 0);
 	return true;
 }
 
@@ -323,7 +309,7 @@ public void editMarker(final View view) {
 							.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 								public void onClick(DialogInterface dialog, int which) {
 									((LinearLayout) parent.getParent()).removeView(parent);
-									musicSrv.removeMarker( editedMarker.getId() );
+									musicSrv.removeMarker( editedMarker );
 								}
 							})
 							.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -331,7 +317,7 @@ public void editMarker(final View view) {
 									G.hideKeyboard( getWindow() );
 								}
 							})
-							.setIcon(R.drawable.ic_marker) //todo: fix a "warnign" icon
+							.setIcon(R.drawable.ic_marker) //todo: fix a "warning" icon
 							.show();
 				}
 			})
@@ -371,7 +357,7 @@ public void editMarker(final View view) {
 }
 
 private void createMarker() {
-	if( !checkSongSelected() ) {
+	if(songNeedsToBeSelected()) {
 		return;
 	}
 	final long time = musicSrv.getCurrentPosition();
@@ -408,7 +394,7 @@ private void createMarker() {
 						return;
 					}
 
-					doMarker(musicSrv.saveMarker(name, newTime));
+					doMarker(musicSrv.addMarker(name, newTime));
 
 				}
 			})
@@ -448,14 +434,14 @@ private Context getContext() {
 
 private void checkAndInitiateMusicService() {
 	if( ContextCompat.checkSelfPermission(
-			this, Manifest.permission.READ_EXTERNAL_STORAGE)
+			this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 			== PackageManager.PERMISSION_GRANTED ) {
 		initiateMusicService();
 	} else {
 		ActivityCompat.requestPermissions(
 				this,
 				new String[]{
-						Manifest.permission.READ_EXTERNAL_STORAGE
+						Manifest.permission.WRITE_EXTERNAL_STORAGE
 				},
 				READ_EXTERNAL_STORAGE_INT
 		);
@@ -571,12 +557,25 @@ public void initiateMusicService() {
 
 	musicSrv.setCallOut(new MusicService.MusicServiceListener() {
 		@Override
-		public void notifyEndTime(final long endTime) {
+		public void onSongLoaded(final Song song, final long endTime) {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
+					Log.v(TAG, "onSongLoaded -> endTime = " + endTime);
+					String title = song.getTitle();
+					String artist = song.getArtist();
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							setUiToStop();
+						}
+					});
+					ActionBar ab = getSupportActionBar();
+					if(ab != null) ab.setTitle( title + ", " + artist );
+
 					timeBar.setMax((int) endTime);
-					for (Marker marker : musicSrv.getCurrentMarkers()) {
+
+					for (Marker marker : song.getMarkers() ) {
 						doMarker(marker);
 					}
 				}
@@ -639,6 +638,7 @@ public void initiateMusicService() {
 		@Override
 		public void selectStopMarkerIndex(
 				final int stopMarkerIndex ) {
+			Log.v(TAG, "selectStopMarkerIndex -> stopMarkerIndex = " + stopMarkerIndex );
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
@@ -669,8 +669,10 @@ public void initiateMusicService() {
 			});
 		}
 
+		/*
 		@Override
-		public void onLoadedSong(final Song song ) {
+		public void onSongLoaded(final Song song ) {
+			Log.v(TAG, "onSongLoaded ->");
 			String title = song.getTitle();
 			String artist = song.getArtist();
 			runOnUiThread(new Runnable() {
@@ -683,10 +685,11 @@ public void initiateMusicService() {
 			ActionBar ab = getSupportActionBar();
 			if(ab != null) ab.setTitle( title + ", " + artist );
 		}
+		*/
 	});
 
 	// must be after the listeners b/c setSong uses
-	// musicServicListener.onLoadedSong()
+	// musicServicListener.onSongLoaded()
 	setSong( musicSrv.getSelectedSongNr() );
 
 }
@@ -699,6 +702,7 @@ private void resetSongListBackgroundColor() {
 }
 
 private void setSong( int songIndex ) {
+	Log.v(TAG, "setSong ->");
 	if( songIndex == -1 ) {
 		return;
 	}
@@ -707,7 +711,7 @@ private void setSong( int songIndex ) {
 	((NavigationView) findViewById(R.id.nav_view)).getMenu().getItem(1).setChecked(true);
 	showMarkerTimeLine();
 
-	LinearLayout markerList = ((LinearLayout) findViewById(R.id.marker_list));
+	LinearLayout markerList = findViewById(R.id.marker_list);
 
 	markerList.removeAllViews();
 
@@ -727,18 +731,19 @@ public void songPicked(View view) {
 	) );
 
 	setSong( songIndex );
-	// The function notifyEndTime above will be called when the song is loaded
+	// The function onSongPrepared above will be called when the song is loaded
 	// it will create the markers.
 }
 
 public void selectMarker(View view) {
 	Marker marker = (Marker) view.getTag();
-	musicSrv.selectStartMarker( marker );
+	musicSrv.saveStartMarker( marker );
 }
 
 public void selectEndMarker(View view) {
+	Log.v(TAG, "selectEndMarker -> view = " + view.getTag() );
 	Marker marker = (Marker) ((View) view.getParent()).getTag();
-	musicSrv.selectEndMarker( marker );
+	musicSrv.saveEndMarker( marker );
 }
 
 public void selectMarkerUi( View view ) {
@@ -757,6 +762,7 @@ public void selectMarkerUi( View view ) {
 }
 
 public void selectStopMarkerUi( View view ) {
+	Log.v(TAG, "selectStopMarkerUi -> view = " + view.getTag() );
 	View markerList = findViewById(R.id.marker_list);
 	int size = ((ViewGroup) markerList).getChildCount();
 	for(int i = 0; i < size; i++ ) {
